@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía de Clase — Jenkins, SonarQube & Python CI/CD</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d12;--bg2:#111620;--bg3:#181f2a;--bg4:#1e2738;
+  --border:#243044;--border2:#2e3d55;
+  --text:#dde6f0;--text2:#7a92ae;--text3:#4d6278;
+  --accent:#38bdf8;--green:#4ade80;--amber:#fbbf24;
+  --red:#f87171;--purple:#c084fc;--teal:#2dd4bf;--orange:#fb923c;
+  --py:#3b82f6;--jenkins:#f59e0b;--sonar:#06b6d4;
+  --r:8px;--rl:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15.5px;line-height:1.72}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(10,13,18,.97);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.ni{max-width:1140px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;height:50px;gap:0;overflow-x:auto;scrollbar-width:none}
+.ni::-webkit-scrollbar{display:none}
+nav a{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-decoration:none;padding:0 13px;height:50px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;letter-spacing:.02em}
+nav a:hover{color:var(--text);border-bottom-color:var(--accent)}
+.nl{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--accent);padding-left:0 !important;border-bottom:none !important;margin-right:10px}
+
+/* HERO */
+.hero{padding:4.5rem 1.5rem 3.5rem;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 900px 400px at 50% 0%,rgba(56,189,248,.06),transparent);pointer-events:none}
+.hchip{display:inline-flex;align-items:center;gap:6px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 13px;border-radius:20px;margin-bottom:1.75rem;letter-spacing:.07em;text-transform:uppercase}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4.5vw,2.9rem);line-height:1.15;margin-bottom:.9rem}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{color:var(--text2);max-width:600px;margin:0 auto 2rem;font-size:16.5px}
+.hpills{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.pill{font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:4px 11px;border-radius:4px;border:1px solid var(--border);color:var(--text2);background:var(--bg2)}
+.pill.py{border-color:rgba(59,130,246,.4);color:#93c5fd}
+.pill.jk{border-color:rgba(245,158,11,.4);color:#fcd34d}
+.pill.sq{border-color:rgba(6,182,212,.4);color:#67e8f9}
+
+/* MAIN */
+.main{max-width:1140px;margin:0 auto;padding:3rem 1.5rem 6rem}
+section{margin-bottom:4.5rem;scroll-margin-top:66px}
+.sdiv{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:4rem 0}
+
+/* HEADINGS */
+h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;color:var(--text);margin-bottom:1.5rem;display:flex;align-items:center;gap:12px}
+.sn{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);padding:3px 9px;border-radius:4px;flex-shrink:0}
+h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1.12rem;color:var(--text);margin:2.25rem 0 .85rem}
+p{margin-bottom:.9rem;color:var(--text)}
+strong{font-weight:600;color:var(--text)}
+code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--bg3);border:1px solid var(--border2);padding:1px 6px;border-radius:4px;color:var(--teal)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* CODE BLOCKS */
+.clabel{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.clabel span{padding:2px 7px;border-radius:3px;font-size:10px;border:1px solid}
+.clabel .lpython{background:rgba(59,130,246,.1);border-color:rgba(59,130,246,.3);color:#93c5fd}
+.clabel .ljenkins{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fcd34d}
+.clabel .lshell{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:#86efac}
+.clabel .lxml{background:rgba(192,132,252,.1);border-color:rgba(192,132,252,.3);color:#d8b4fe}
+pre{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;overflow-x:auto;margin:.85rem 0}
+pre code{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.9;background:none;border:none;padding:0;color:var(--text)}
+.cm{color:#3d5269}.ck{color:#ff7b72}.cs{color:#a5d6ff}.cv{color:#79c0ff}
+.cf{color:#ffa657}.ce{color:#d2a8ff}.cc{color:#56d364}.cw{color:#e3b341}
+.cdef{color:#d2a8ff}.ccls{color:#ffa657}.cstr{color:#a5d6ff}
+.cdec{color:#79c0ff}.cself{color:#e3b341}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;margin-bottom:1.25rem}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.25rem}
+.g3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.9rem;margin-bottom:1.25rem}
+
+/* FILE TREE */
+.tree{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2}
+.tree .dir{color:var(--amber)}
+.tree .pyf{color:var(--py)}
+.tree .txf{color:var(--green)}
+.tree .jkf{color:var(--jenkins)}
+.tree .root{color:var(--accent);font-weight:700}
+
+/* CALLOUTS */
+.callout{border-radius:var(--r);padding:1rem 1.25rem;margin:1.25rem 0;border-left:3px solid;font-size:14.5px;line-height:1.7}
+.callout.info{background:rgba(56,189,248,.06);border-color:var(--accent);color:#b0ddf5}
+.callout.warn{background:rgba(251,191,36,.06);border-color:var(--amber);color:#f5d97a}
+.callout.ok{background:rgba(74,222,128,.06);border-color:var(--green);color:#a0e9b5}
+.callout.tip{background:rgba(192,132,252,.06);border-color:var(--purple);color:#d8b4fe}
+.callout strong{font-weight:600}
+
+/* STEPS */
+.steps{margin:1.25rem 0}
+.step{display:grid;grid-template-columns:38px 1fr;gap:1rem;margin-bottom:1.75rem}
+.snum{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13.5px;color:var(--accent);flex-shrink:0;margin-top:3px}
+.step h4{font-family:'DM Sans',sans-serif;font-weight:600;font-size:15px;color:var(--text);margin-bottom:.5rem}
+
+/* PIPELINE DIAGRAM */
+.pipeline{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:1.25rem 0}
+.pstage{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:.65rem 1rem;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);text-align:center;flex-shrink:0;position:relative}
+.pstage .pnum{font-size:10px;color:var(--text3);display:block;margin-bottom:2px}
+.pstage .plabel{font-weight:600;color:var(--accent)}
+.parrow{color:var(--border2);font-size:18px;padding:0 4px;flex-shrink:0}
+.pstage.ok .plabel{color:var(--green)}
+.pstage.warn .plabel{color:var(--amber)}
+
+/* RETOS */
+.reto{background:rgba(56,189,248,.04);border:1px solid rgba(56,189,248,.25);border-radius:var(--rl);padding:1.5rem;margin:2rem 0}
+.reto-h{display:flex;align-items:center;gap:10px;margin-bottom:1rem;flex-wrap:wrap}
+.rbadge{font-family:'Syne',sans-serif;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;padding:3px 10px;border-radius:20px}
+.rb-b{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.28)}
+.rb-i{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.28)}
+.rb-a{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.28)}
+.rtitle{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;color:var(--accent)}
+.reto textarea{width:100%;min-height:80px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12.5px;padding:10px 12px;resize:vertical;line-height:1.6;margin-top:.6rem}
+.reto textarea:focus{outline:none;border-color:var(--accent)}
+.reto textarea::placeholder{color:var(--text3)}
+details.pista summary{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--amber);cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px;margin-top:.6rem;user-select:none}
+details.pista summary::before{content:'▶';font-size:9px;transition:transform .2s}
+details.pista[open] summary::before{transform:rotate(90deg)}
+.pista-body{background:rgba(251,191,36,.06);border-left:2px solid var(--amber);padding:.75rem 1rem;margin-top:.4rem;border-radius:0 var(--r) var(--r) 0;font-size:14px;color:#f5d97a;line-height:1.7}
+
+/* MODULE CARDS */
+.mcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;position:relative;overflow:hidden}
+.mcard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.mcard.m1::before{background:linear-gradient(90deg,#3b82f6,#60a5fa)}
+.mcard.m2::before{background:linear-gradient(90deg,#8b5cf6,#a78bfa)}
+.mcard.m3::before{background:linear-gradient(90deg,#0891b2,#22d3ee)}
+.mcard h4{font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;margin-bottom:.5rem}
+.mcard.m1 h4{color:#93c5fd}
+.mcard.m2 h4{color:#c4b5fd}
+.mcard.m3 h4{color:#67e8f9}
+.mcard p{font-size:13.5px;color:var(--text2);margin-bottom:.5rem}
+.mcard .badge{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--bg3);border:1px solid var(--border2);padding:2px 8px;border-radius:3px;color:var(--green);display:inline-block;margin-top:.3rem}
+
+/* PRINT */
+@media print{
+  nav,details.pista,.reto textarea{display:none}
+  body{background:#fff;color:#000;font-size:13px}
+  .hero{background:#f5f5f5;padding:1.5rem}
+  .hero h1,h2,h3{color:#000}
+  pre,code{background:#f0f0f0 !important;color:#000 !important;border:1px solid #ccc}
+  .callout,.reto,.mcard,.card{border:1px solid #ccc;background:#fafafa}
+  section{page-break-inside:avoid}
+}
+
+@media(max-width:640px){
+  .main{padding:2rem 1rem 4rem}
+  h2{font-size:1.3rem}
+  .hero h1{font-size:1.6rem}
+  .step{grid-template-columns:30px 1fr}
+  pre{font-size:11.5px;padding:1rem}
+  .pipeline{flex-direction:column;align-items:flex-start}
+  .parrow{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a class="nl" href="#top">⚙ CI/CD Lab</a>
+    <a href="#proyecto">Proyecto</a>
+    <a href="#estructura">Estructura</a>
+    <a href="#modulos">Módulos</a>
+    <a href="#tests">Tests</a>
+    <a href="#jenkins-config">Jenkins</a>
+    <a href="#sonar-config">SonarQube</a>
+    <a href="#pipeline">Pipeline</a>
+    <a href="#resultados">Resultados</a>
+  </div>
+</nav>
+
+<div id="top" class="hero">
+  <div class="hchip">Calidad del Software · Sesión Práctica CI/CD</div>
+  <h1>Jenkins + SonarQube<br><em>con un proyecto Python real</em></h1>
+  <p>Configura un pipeline de integración continua completo para el Sistema de Notas Universitarias — con pruebas unitarias, cobertura y análisis de calidad.</p>
+  <div class="hpills">
+    <span class="pill py">Python 3</span>
+    <span class="pill py">pytest + coverage</span>
+    <span class="pill jk">bitnami/jenkins</span>
+    <span class="pill sq">bitnami/sonarqube</span>
+    <span class="pill">Jenkinsfile</span>
+    <span class="pill">70 pruebas unitarias</span>
+    <span class="pill">Quality Gate</span>
+  </div>
+</div>
+
+<main class="main">
+
+<!-- ══════════════════════════ PROYECTO ══════════════════════════ -->
+<section id="proyecto">
+  <h2><span class="sn">01</span> El proyecto: Sistema de Notas Universitarias</h2>
+
+  <p>El proyecto que analizaremos hoy es un <strong>gestor de notas universitario</strong> escrito en Python. Tiene tres módulos independientes con responsabilidades bien definidas, y 70 pruebas unitarias que verifican su comportamiento. Este es exactamente el tipo de proyecto que Jenkins y SonarQube están diseñados para proteger.</p>
+
+  <div class="g3">
+    <div class="mcard m1">
+      <div style="font-size:22px;margin-bottom:.5rem">👨‍🎓</div>
+      <h4>estudiantes.py</h4>
+      <p>Gestión del registro de estudiantes. Validación de códigos, nombres y emails. Búsqueda, listado ordenado y eliminación.</p>
+      <span class="badge">21 pruebas</span>
+    </div>
+    <div class="mcard m2">
+      <div style="font-size:22px;margin-bottom:.5rem">📚</div>
+      <h4>materias.py</h4>
+      <p>Registro de materias del plan de estudios. Validación de créditos (1–6), suma total de créditos, ordenamiento por nombre.</p>
+      <span class="badge">22 pruebas</span>
+    </div>
+    <div class="mcard m3">
+      <div style="font-size:22px;margin-bottom:.5rem">📝</div>
+      <h4>notas.py</h4>
+      <p>Asignación de trabajos y cálculo de promedios. Notas entre 0.0 y 5.0, aprobación ≥ 3.0, reportes por estudiante.</p>
+      <span class="badge">27 pruebas</span>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>¿Por qué este proyecto?</strong> Tiene tres módulos con dependencias entre ellos (notas depende de estudiantes y materias), lo que hace que el análisis de SonarQube sea más interesante — detectará el acoplamiento, la cobertura por módulo y posibles problemas de calidad.
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ ESTRUCTURA ══════════════════════════ -->
+<section id="estructura">
+  <h2><span class="sn">02</span> Estructura del proyecto</h2>
+
+  <p>El proyecto sigue la estructura estándar de Python para proyectos con pruebas. Descarga los archivos desde donde el docente los compartió y colócalos exactamente en esta jerarquía.</p>
+
+  <div class="tree">
+    <span class="root">notas_universitarias/</span><br>
+    &nbsp;&nbsp;├── <span class="dir">src/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">__init__.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># expone los módulos del paquete</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">estudiantes.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># Módulo 1: registro de estudiantes</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">materias.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># Módulo 2: registro de materias</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="pyf">notas.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># Módulo 3: trabajos y notas</span><br>
+    &nbsp;&nbsp;├── <span class="dir">tests/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">__init__.py</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">test_estudiantes.py</span> &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># 21 pruebas unitarias</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">test_materias.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># 22 pruebas unitarias</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="pyf">test_notas.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># 27 pruebas unitarias</span><br>
+    &nbsp;&nbsp;├── <span class="jkf">Jenkinsfile</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># Pipeline de CI/CD</span><br>
+    &nbsp;&nbsp;├── <span class="txf">requirements.txt</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># dependencias Python</span><br>
+    &nbsp;&nbsp;├── <span class="txf">setup.cfg</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># configuración de pytest y coverage</span><br>
+    &nbsp;&nbsp;└── <span class="txf">conftest.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># configuración de pytest</span>
+  </div>
+
+  <div class="callout warn">
+    <strong>Importante en Windows:</strong> coloca la carpeta <code>notas_universitarias</code> en el Escritorio o en <code>C:\Users\TuNombre\</code>. Evita rutas con espacios o caracteres especiales — pueden causar problemas al copiar los archivos al contenedor de Jenkins.
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ MÓDULOS ══════════════════════════ -->
+<section id="modulos">
+  <h2><span class="sn">03</span> Anatomía del código fuente</h2>
+
+  <h3>Módulo 1 — estudiantes.py</h3>
+  <p>Define dos clases: <code>Estudiante</code> (el modelo de datos) y <code>RegistroEstudiantes</code> (el repositorio en memoria). Observa cómo cada método valida sus entradas y lanza excepciones descriptivas.</p>
+
+  <span class="clabel"><span class="lpython">Python</span> src/estudiantes.py — fragmento clave</span>
+  <pre><code><span class="cdef">class</span> <span class="ccls">Estudiante</span>:
+    <span class="cdef">def</span> <span class="cdef">__init__</span>(<span class="cself">self</span>, codigo: str, nombre: str, email: str):
+        <span class="cdef">if</span> <span class="cdef">not</span> codigo <span class="cdef">or</span> <span class="cdef">not</span> codigo.strip():
+            <span class="cdef">raise</span> ValueError(<span class="cstr">"El código del estudiante no puede estar vacío."</span>)
+        <span class="cdef">if</span> <span class="cstr">"@"</span> <span class="cdef">not in</span> email:
+            <span class="cdef">raise</span> ValueError(<span class="cstr">"El email debe contener '@'."</span>)
+
+        <span class="cself">self</span>.codigo = codigo.strip().<span class="cdec">upper</span>()   <span class="cm"># siempre mayúsculas</span>
+        <span class="cself">self</span>.nombre = nombre.strip()
+        <span class="cself">self</span>.email  = email.strip().<span class="cdec">lower</span>()    <span class="cm"># siempre minúsculas</span>
+
+
+<span class="cdef">class</span> <span class="ccls">RegistroEstudiantes</span>:
+    <span class="cdef">def</span> <span class="cdef">__init__</span>(<span class="cself">self</span>):
+        <span class="cself">self</span>._estudiantes: dict[str, Estudiante] = {}
+
+    <span class="cdef">def</span> <span class="cdec">registrar</span>(<span class="cself">self</span>, estudiante: Estudiante) -> <span class="cdef">None</span>:
+        <span class="cdef">if</span> estudiante.codigo <span class="cdef">in</span> <span class="cself">self</span>._estudiantes:
+            <span class="cdef">raise</span> ValueError(<span class="cstr">f"Ya existe un estudiante con código {estudiante.codigo!r}."</span>)
+        <span class="cself">self</span>._estudiantes[estudiante.codigo] = estudiante</code></pre>
+
+  <h3>Módulo 3 — notas.py (el más complejo)</h3>
+  <p>Depende de los módulos 1 y 2. Maneja la lógica de negocio: una nota debe estar entre 0.0 y 5.0, y se aprueba con ≥ 3.0 — igual que en el reglamento de la institución.</p>
+
+  <span class="clabel"><span class="lpython">Python</span> src/notas.py — fragmento clave</span>
+  <pre><code><span class="cdef">from</span> src.estudiantes <span class="cdef">import</span> Estudiante
+<span class="cdef">from</span> src.materias    <span class="cdef">import</span> Materia
+
+<span class="cdef">class</span> <span class="ccls">Trabajo</span>:
+    NOTA_MIN = <span class="cv">0.0</span>
+    NOTA_MAX = <span class="cv">5.0</span>
+
+    <span class="cdef">def</span> <span class="cdef">__init__</span>(<span class="cself">self</span>, estudiante: Estudiante, materia: Materia,
+                 nombre_trabajo: str, nota: float):
+        <span class="cdef">if not</span> (<span class="cself">self</span>.NOTA_MIN <= nota <= <span class="cself">self</span>.NOTA_MAX):
+            <span class="cdef">raise</span> ValueError(<span class="cstr">f"La nota debe estar entre {self.NOTA_MIN} y {self.NOTA_MAX}."</span>)
+        <span class="cself">self</span>.nota = <span class="cdec">round</span>(<span class="cdec">float</span>(nota), <span class="cv">2</span>)   <span class="cm"># 2 decimales siempre</span>
+
+    <span class="cdef">def</span> <span class="cdec">aprobado</span>(<span class="cself">self</span>) -> bool:
+        <span class="cdef">return</span> <span class="cself">self</span>.nota >= <span class="cv">3.0</span>           <span class="cm"># criterio de aprobación</span>
+
+
+<span class="cdef">class</span> <span class="ccls">GestorNotas</span>:
+    <span class="cdef">def</span> <span class="cdec">promedio_estudiante</span>(<span class="cself">self</span>, codigo: str) -> float:
+        trabajos = <span class="cself">self</span>.trabajos_de_estudiante(codigo)
+        <span class="cdef">if not</span> trabajos:
+            <span class="cdef">return</span> <span class="cv">0.0</span>
+        <span class="cdef">return</span> <span class="cdec">round</span>(<span class="cdec">sum</span>(t.nota <span class="cdef">for</span> t <span class="cdef">in</span> trabajos) / <span class="cdec">len</span>(trabajos), <span class="cv">2</span>)</code></pre>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-b">Reto 1 · Básico</span>
+      <span class="rtitle">Leer y entender el código</span>
+    </div>
+    <p style="font-size:14.5px">Abre el archivo <code>src/notas.py</code> y responde: ¿por qué el método <code>promedio_estudiante</code> retorna <code>0.0</code> si el estudiante no tiene trabajos en lugar de causar un error de división? ¿Qué pasaría si no tuviera esa validación?</p>
+    <textarea placeholder="Escribe tu análisis aquí..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">Piensa en qué ocurre cuando divides en Python: <code>sum([]) / 0</code>. ¿Qué excepción lanzaría? ¿Tendría sentido retornar un promedio de 0 cuando no hay datos, o sería mejor lanzar un error? Ambas opciones son válidas — pero hay que elegir una y documentarla.</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ TESTS ══════════════════════════ -->
+<section id="tests">
+  <h2><span class="sn">04</span> Las pruebas unitarias con pytest</h2>
+
+  <p>Hay 70 pruebas distribuidas en tres archivos. Antes de conectar Jenkins, vamos a correr las pruebas <strong>localmente</strong> para entender qué miden y cómo funciona pytest.</p>
+
+  <h3>Ejecutar las pruebas localmente</h3>
+
+  <div class="callout warn">
+    <strong>En Windows:</strong> Abre PowerShell, navega a la carpeta del proyecto y asegúrate de tener Python y pip instalados. Si usas el contenedor Jenkins para correr las pruebas, salta al paso de configuración de Jenkins.
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="snum">1</div>
+      <div class="step-body">
+        <h4>Instalar dependencias</h4>
+        <span class="clabel"><span class="lshell">PowerShell</span></span>
+        <pre><code><span class="cm"># Navegar a la carpeta del proyecto</span>
+<span class="cc">cd $env:USERPROFILE\Desktop\notas_universitarias</span>
+
+<span class="cm"># Instalar pytest y plugin de cobertura</span>
+<span class="cc">pip install -r requirements.txt</span></code></pre>
+      </div>
+    </div>
+    <div class="step">
+      <div class="snum">2</div>
+      <div class="step-body">
+        <h4>Correr todas las pruebas</h4>
+        <span class="clabel"><span class="lshell">PowerShell</span></span>
+        <pre><code><span class="cm"># Ejecución básica con salida detallada</span>
+<span class="cc">python -m pytest tests/ -v</span>
+
+<span class="cm"># Con reporte de cobertura en la terminal</span>
+<span class="cc">python -m pytest tests/ -v --cov=src --cov-report=term-missing</span></code></pre>
+        <p style="font-size:14px;color:var(--text2);margin-top:.5rem">Si todo está correcto verás: <code style="color:var(--green)">70 passed</code></p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="snum">3</div>
+      <div class="step-body">
+        <h4>Generar reporte HTML de cobertura</h4>
+        <span class="clabel"><span class="lshell">PowerShell</span></span>
+        <pre><code><span class="cc">python -m pytest tests/ --cov=src --cov-report=html:reports/coverage_html</span>
+
+<span class="cm"># Abre el reporte en el navegador</span>
+<span class="cc">start reports\coverage_html\index.html</span></code></pre>
+      </div>
+    </div>
+  </div>
+
+  <h3>Anatomía de una prueba unitaria</h3>
+  <p>Observa el patrón <strong>Arrange → Act → Assert</strong> en cada test:</p>
+
+  <span class="clabel"><span class="lpython">Python</span> tests/test_notas.py — ejemplo comentado</span>
+  <pre><code><span class="cdef">def</span> <span class="cdec">test_promedio_estudiante_calculo_correcto</span>(<span class="cself">self</span>, gestor, estudiante, materia, materia2):
+
+    <span class="cm"># ── ARRANGE: preparar los datos de prueba ──</span>
+    gestor.asignar(Trabajo(estudiante, materia,  <span class="cstr">"Parcial 1"</span>, <span class="cv">4.0</span>))
+    gestor.asignar(Trabajo(estudiante, materia2, <span class="cstr">"Parcial 2"</span>, <span class="cv">3.0</span>))
+
+    <span class="cm"># ── ACT: ejecutar la acción que queremos probar ──</span>
+    promedio = gestor.promedio_estudiante(<span class="cstr">"E001"</span>)
+
+    <span class="cm"># ── ASSERT: verificar el resultado esperado ──</span>
+    <span class="cdef">assert</span> promedio == <span class="cv">3.5</span>   <span class="cm"># (4.0 + 3.0) / 2 = 3.5</span></code></pre>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-b">Reto 2 · Básico</span>
+      <span class="rtitle">Agregar una prueba nueva</span>
+    </div>
+    <p style="font-size:14.5px">En el archivo <code>tests/test_notas.py</code>, agrega una prueba que verifique que al registrar tres trabajos con notas 2.0, 2.5 y 1.5, el método <code>reporte_estudiante</code> reporta 3 reprobados y 0 aprobados. Sigue el patrón AAA.</p>
+    <textarea placeholder="Escribe aquí el código de tu prueba..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">Necesitas: 1) crear un <code>GestorNotas</code>, 2) asignar tres trabajos con notas menores a 3.0, 3) llamar <code>reporte_estudiante</code> y verificar que <code>reporte["reprobados"] == 3</code> y <code>reporte["aprobados"] == 0</code>.</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ JENKINS CONFIG ══════════════════════════ -->
+<section id="jenkins-config">
+  <h2><span class="sn">05</span> Configurar Jenkins para el proyecto</h2>
+
+  <p>Con Jenkins corriendo en <strong>http://localhost:8080</strong>, vamos a crear el job que ejecutará el pipeline. Jenkins leerá el <code>Jenkinsfile</code> del proyecto para saber qué hacer.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="snum">1</div>
+      <div class="step-body">
+        <h4>Instalar plugins necesarios en Jenkins</h4>
+        <p style="font-size:14px;color:var(--text2)">Ve a <strong>Dashboard → Manage Jenkins → Plugins → Available plugins</strong> y busca e instala:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.5rem">
+          <code>SonarQube Scanner</code>
+          <code>HTML Publisher</code>
+          <code>JUnit</code>
+          <code>Pipeline</code>
+          <code>Git</code>
+        </div>
+        <div class="callout info" style="margin-top:.75rem">Después de instalar plugins, Jenkins pedirá reiniciarse. Márcalo y espera a que vuelva. Esto es normal.</div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">2</div>
+      <div class="step-body">
+        <h4>Instalar sonar-scanner en el contenedor Jenkins</h4>
+        <p style="font-size:14px;color:var(--text2)">El <code>Jenkinsfile</code> usa el comando <code>sonar-scanner</code>. Debemos instalarlo dentro del contenedor Jenkins:</p>
+        <span class="clabel"><span class="lshell">PowerShell — en tu máquina Windows</span></span>
+        <pre><code><span class="cm"># Entrar al contenedor Jenkins como root</span>
+<span class="cc">docker exec -it --user root jenkins bash</span></code></pre>
+        <span class="clabel"><span class="lshell">Bash — dentro del contenedor Jenkins</span></span>
+        <pre><code><span class="cm"># Descargar sonar-scanner</span>
+<span class="cc">cd /opt</span>
+<span class="cc">curl -LO https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip</span>
+<span class="cc">unzip sonar-scanner-cli-5.0.1.3006-linux.zip</span>
+<span class="cc">mv sonar-scanner-5.0.1.3006-linux sonar-scanner</span>
+
+<span class="cm"># Agregar al PATH para que Jenkins lo encuentre</span>
+<span class="cc">echo 'export PATH=/opt/sonar-scanner/bin:$PATH' >> /etc/profile</span>
+<span class="cc">echo 'export PATH=/opt/sonar-scanner/bin:$PATH' >> /root/.bashrc</span>
+<span class="cc">ln -sf /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner</span>
+
+<span class="cm"># Verificar instalación</span>
+<span class="cc">sonar-scanner --version</span>
+<span class="cc">exit</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">3</div>
+      <div class="step-body">
+        <h4>Instalar Python y pip en el contenedor Jenkins</h4>
+        <span class="clabel"><span class="lshell">PowerShell</span></span>
+        <pre><code><span class="cc">docker exec -it --user root jenkins bash</span></code></pre>
+        <span class="clabel"><span class="lshell">Bash — dentro del contenedor</span></span>
+        <pre><code><span class="cm"># Actualizar paquetes e instalar Python</span>
+<span class="cc">apt-get update -qq</span>
+<span class="cc">apt-get install -y python3 python3-pip unzip curl</span>
+
+<span class="cm"># Verificar</span>
+<span class="cc">python3 --version && pip3 --version</span>
+<span class="cc">exit</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">4</div>
+      <div class="step-body">
+        <h4>Conectar Jenkins a SonarQube</h4>
+        <p style="font-size:14px;color:var(--text2)">En Jenkins: <strong>Manage Jenkins → System → SonarQube servers</strong></p>
+        <ul style="margin:.5rem 0 .5rem 1.4rem;font-size:14px;line-height:2.1;color:var(--text2)">
+          <li>Marca <strong>Enable injection of SonarQube server configuration</strong></li>
+          <li><strong>Name:</strong> <code>SonarQube</code> (exactamente igual que en el Jenkinsfile)</li>
+          <li><strong>Server URL:</strong> <code>http://sonarqube:9000</code></li>
+          <li><strong>Server authentication token:</strong> genera uno en SonarQube (siguiente paso)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">5</div>
+      <div class="step-body">
+        <h4>Generar token de autenticación en SonarQube</h4>
+        <p style="font-size:14px;color:var(--text2)">En SonarQube (<strong>http://localhost:9000</strong>):</p>
+        <ul style="margin:.5rem 0 .5rem 1.4rem;font-size:14px;line-height:2.1;color:var(--text2)">
+          <li>Inicia sesión con <code>admin</code> / <code>sonar123</code></li>
+          <li>Clic en tu avatar → <strong>My Account → Security</strong></li>
+          <li>En <strong>Generate Tokens</strong>: nombre <code>jenkins-token</code>, tipo <strong>Global Analysis Token</strong></li>
+          <li>Copia el token generado — solo se muestra una vez</li>
+          <li>Regresa a Jenkins → agrega el token como credencial <strong>Secret text</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">6</div>
+      <div class="step-body">
+        <h4>Copiar el proyecto al contenedor Jenkins</h4>
+        <span class="clabel"><span class="lshell">PowerShell — desde tu máquina Windows</span></span>
+        <pre><code><span class="cm"># Copiar toda la carpeta del proyecto al workspace de Jenkins</span>
+<span class="cm"># Ajusta la ruta de origen si tu proyecto está en otro lugar</span>
+<span class="cc">docker cp $env:USERPROFILE\Desktop\notas_universitarias jenkins:/var/jenkins_home/workspace/notas-universitarias</span>
+
+<span class="cm"># Verificar que los archivos llegaron</span>
+<span class="cc">docker exec jenkins ls /var/jenkins_home/workspace/notas-universitarias</span></code></pre>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">7</div>
+      <div class="step-body">
+        <h4>Crear el job Pipeline en Jenkins</h4>
+        <p style="font-size:14px;color:var(--text2)">En Jenkins: <strong>Dashboard → New Item</strong></p>
+        <ul style="margin:.5rem 0 .5rem 1.4rem;font-size:14px;line-height:2.1;color:var(--text2)">
+          <li><strong>Nombre:</strong> <code>notas-universitarias</code></li>
+          <li><strong>Tipo:</strong> <em>Pipeline</em></li>
+          <li>En la sección <strong>Pipeline</strong>, selecciona <em>Pipeline script from SCM</em> si tienes Git, o <em>Pipeline script</em> y pega el contenido del Jenkinsfile directamente</li>
+          <li>Clic en <strong>Save</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-i">Reto 3 · Intermedio</span>
+      <span class="rtitle">Identificar el propósito de cada stage</span>
+    </div>
+    <p style="font-size:14.5px">Abre el <code>Jenkinsfile</code> del proyecto y responde para cada uno de los 6 stages: ¿qué hace exactamente? ¿Qué pasaría si ese stage fallara? ¿El pipeline continuaría o se detendría?</p>
+    <textarea style="min-height:110px" placeholder="Stage 1 · Checkout: ...&#10;Stage 2 · Preparar entorno: ...&#10;Stage 3 · Pruebas unitarias: ...&#10;Stage 4 · Análisis SonarQube: ...&#10;Stage 5 · Quality Gate: ...&#10;Stage 6 · Resumen: ..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">Por defecto en un pipeline declarativo, si un stage falla, todos los stages siguientes se saltan y el pipeline termina en estado FAILED. La excepción es el bloque <code>post { always { ... } }</code> que se ejecuta sin importar el resultado.</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ SONAR CONFIG ══════════════════════════ -->
+<section id="sonar-config">
+  <h2><span class="sn">06</span> Configurar el proyecto en SonarQube</h2>
+
+  <div class="steps">
+    <div class="step">
+      <div class="snum">1</div>
+      <div class="step-body">
+        <h4>Crear el proyecto en SonarQube</h4>
+        <p style="font-size:14px;color:var(--text2)">En <strong>http://localhost:9000</strong>:</p>
+        <ul style="margin:.5rem 0 .5rem 1.4rem;font-size:14px;line-height:2.1;color:var(--text2)">
+          <li><strong>Projects → Create project → Manually</strong></li>
+          <li><strong>Project key:</strong> <code>notas-universitarias</code> (igual que en el Jenkinsfile)</li>
+          <li><strong>Display name:</strong> <code>Sistema de Notas Universitarias</code></li>
+          <li>Clic en <strong>Set Up</strong></li>
+          <li>En la siguiente pantalla selecciona <em>"With Jenkins"</em> y luego <em>"Pipeline"</em></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">2</div>
+      <div class="step-body">
+        <h4>Configurar el Quality Gate</h4>
+        <p style="font-size:14px;color:var(--text2)">El Quality Gate define las condiciones mínimas de calidad. Ve a <strong>Quality Gates → Sonar way</strong> (el predeterminado) y observa las condiciones:</p>
+        <div style="overflow-x:auto;margin-top:.75rem">
+          <table style="width:100%;border-collapse:collapse;font-size:13.5px">
+            <thead>
+              <tr style="background:var(--bg3)">
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600">Métrica</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600">Condición</th>
+                <th style="padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600">Qué significa</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding:9px 12px;border-bottom:1px solid var(--border)">Coverage</td><td style="padding:9px 12px;border-bottom:1px solid var(--border)"><code>&gt;= 80%</code></td><td style="padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2)">Mínimo 80% del código debe estar cubierto por pruebas</td></tr>
+              <tr style="background:var(--bg3)"><td style="padding:9px 12px;border-bottom:1px solid var(--border)">Duplicated Lines</td><td style="padding:9px 12px;border-bottom:1px solid var(--border)"><code>&lt; 3%</code></td><td style="padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2)">Máximo 3% de código duplicado en código nuevo</td></tr>
+              <tr><td style="padding:9px 12px;border-bottom:1px solid var(--border)">Maintainability Rating</td><td style="padding:9px 12px;border-bottom:1px solid var(--border)"><code>A</code></td><td style="padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text2)">Deuda técnica mínima — código fácil de mantener</td></tr>
+              <tr style="background:var(--bg3)"><td style="padding:9px 12px">Security Rating</td><td style="padding:9px 12px"><code>A</code></td><td style="padding:9px 12px;color:var(--text2)">Sin vulnerabilidades de seguridad críticas</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">3</div>
+      <div class="step-body">
+        <h4>Configurar webhook en SonarQube</h4>
+        <p style="font-size:14px;color:var(--text2)">Para que el Quality Gate notifique a Jenkins al terminar el análisis:</p>
+        <ul style="margin:.5rem 0 .5rem 1.4rem;font-size:14px;line-height:2.1;color:var(--text2)">
+          <li>En SonarQube: <strong>Administration → Configuration → Webhooks → Create</strong></li>
+          <li><strong>Name:</strong> <code>Jenkins</code></li>
+          <li><strong>URL:</strong> <code>http://jenkins:8080/sonarqube-webhook/</code></li>
+        </ul>
+        <div class="callout info">El webhook usa el nombre del contenedor <code>jenkins</code> porque SonarQube está en la misma red Docker <code>calidad-net</code>. Recuerda que dentro de esa red, los contenedores se comunican por nombre.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ PIPELINE ══════════════════════════ -->
+<section id="pipeline">
+  <h2><span class="sn">07</span> Ejecutar el pipeline y entender el Jenkinsfile</h2>
+
+  <h3>Estructura del Jenkinsfile</h3>
+  <p>El <code>Jenkinsfile</code> define 6 stages en un pipeline declarativo. Cada stage tiene una responsabilidad única:</p>
+
+  <div class="pipeline">
+    <div class="pstage"><span class="pnum">Stage 1</span><span class="plabel">Checkout</span></div>
+    <div class="parrow">→</div>
+    <div class="pstage"><span class="pnum">Stage 2</span><span class="plabel">Entorno</span></div>
+    <div class="parrow">→</div>
+    <div class="pstage ok"><span class="pnum">Stage 3</span><span class="plabel">Tests</span></div>
+    <div class="parrow">→</div>
+    <div class="pstage"><span class="pnum">Stage 4</span><span class="plabel">SonarQube</span></div>
+    <div class="parrow">→</div>
+    <div class="pstage warn"><span class="pnum">Stage 5</span><span class="plabel">Quality Gate</span></div>
+    <div class="parrow">→</div>
+    <div class="pstage"><span class="pnum">Stage 6</span><span class="plabel">Resumen</span></div>
+  </div>
+
+  <h3>Fragmentos clave del Jenkinsfile explicados</h3>
+
+  <span class="clabel"><span class="ljenkins">Jenkinsfile</span> variables de entorno</span>
+  <pre><code><span class="cf">environment</span> {
+    <span class="cm">// Nombre del proyecto en SonarQube — debe coincidir exactamente</span>
+    SONAR_PROJECT_KEY  = <span class="cs">"notas-universitarias"</span>
+
+    <span class="cm">// URL del contenedor SonarQube en la red Docker calidad-net</span>
+    <span class="cm">// Jenkins lo alcanza por nombre porque ambos están en la misma red</span>
+    SONAR_HOST_URL = <span class="cs">"http://sonarqube:9000"</span>
+
+    <span class="cm">// Porcentaje mínimo de cobertura requerido</span>
+    COVERAGE_THRESHOLD = <span class="cs">"80"</span>
+}</code></pre>
+
+  <span class="clabel"><span class="ljenkins">Jenkinsfile</span> stage de pruebas con cobertura</span>
+  <pre><code><span class="cf">stage</span>(<span class="cs">"3 · Pruebas unitarias"</span>) {
+    <span class="cf">steps</span> {
+        <span class="cf">sh</span> <span class="cs">"""
+            python3 -m pytest tests/ \\
+                --cov=src \\                        <span class="cm"># mide cobertura del paquete src/</span>
+                --cov-report=xml:reports/coverage.xml \\  <span class="cm"># XML para SonarQube</span>
+                --cov-report=html:reports/coverage_html \\ <span class="cm"># HTML para Jenkins</span>
+                --cov-fail-under=\${COVERAGE_THRESHOLD} \\ <span class="cm"># falla si < 80%</span>
+                --junitxml=reports/test_results.xml   <span class="cm"># resultados para Jenkins</span>
+        """</span>
+    }
+    <span class="cf">post</span> {
+        <span class="cf">always</span> {
+            <span class="cm">// Publica resultados en el dashboard de Jenkins aunque fallen</span>
+            <span class="cf">junit</span> <span class="cs">"reports/test_results.xml"</span>
+            <span class="cf">publishHTML</span>([...])   <span class="cm">// reporte de cobertura visual</span>
+        }
+    }
+}</code></pre>
+
+  <h3>Ejecutar el pipeline manualmente</h3>
+  <p>En Jenkins, navega al job <code>notas-universitarias</code> y haz clic en <strong>Build Now</strong>. Observa el pipeline en tiempo real:</p>
+
+  <div class="card">
+    <p style="font-size:14px;color:var(--text2);margin-bottom:.75rem">Cosas que debes buscar durante la ejecución:</p>
+    <ul style="font-size:14px;line-height:2.2;margin-left:1.4rem;color:var(--text)">
+      <li>En Stage 3: la línea <code style="color:var(--green)">70 passed</code> en los logs</li>
+      <li>En Stage 3: el porcentaje de cobertura reportado por pytest-cov</li>
+      <li>En Stage 4: el mensaje <code>ANALYSIS SUCCESSFUL</code> de sonar-scanner</li>
+      <li>En Stage 5: el mensaje <code>Quality Gate passed</code> o <code>Quality Gate failed</code></li>
+    </ul>
+  </div>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-i">Reto 4 · Intermedio</span>
+      <span class="rtitle">Romper el pipeline intencionalmente</span>
+    </div>
+    <p style="font-size:14.5px">Modifica el archivo <code>src/estudiantes.py</code>: elimina la validación del email (quita el <code>if "@" not in email</code>). Luego vuelve a ejecutar el pipeline. ¿Qué ocurre? ¿En qué stage falla? ¿Qué mensaje aparece en Jenkins? Explica por qué ese comportamiento es valioso en un equipo de desarrollo.</p>
+    <textarea placeholder="Describe lo que ocurrió y por qué esto es útil en un proyecto real..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">Al eliminar la validación, el test <code>test_email_sin_arroba_lanza_error</code> fallará porque espera un <code>ValueError</code> que ya no ocurre. El pipeline fallará en Stage 3 (Pruebas unitarias) y los stages 4, 5 y 6 nunca correrán — protegiendo a SonarQube de analizar código roto. Esto es exactamente la idea de CI.</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ RESULTADOS ══════════════════════════ -->
+<section id="resultados">
+  <h2><span class="sn">08</span> Interpretar los resultados en SonarQube</h2>
+
+  <p>Una vez que el pipeline pase completamente, ve a <strong>http://localhost:9000</strong> y abre el proyecto <code>notas-universitarias</code>. Estas son las métricas que debes saber interpretar:</p>
+
+  <div class="g2">
+    <div class="card">
+      <h4 style="color:var(--green);margin-bottom:.6rem;font-family:'Syne',sans-serif;font-weight:700">Coverage — Cobertura</h4>
+      <p style="font-size:14px;color:var(--text2)">Porcentaje de líneas de código ejecutadas por las pruebas. El proyecto debería mostrar ~95% porque tiene 70 pruebas bien distribuidas. Una cobertura alta no garantiza que las pruebas sean buenas, pero una cobertura baja garantiza que hay código no verificado.</p>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--accent);margin-bottom:.6rem;font-family:'Syne',sans-serif;font-weight:700">Bugs — Errores potenciales</h4>
+      <p style="font-size:14px;color:var(--text2)">Código que SonarQube identifica como probable fuente de errores en tiempo de ejecución. Para este proyecto debería ser 0 o cercano a 0.</p>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--amber);margin-bottom:.6rem;font-family:'Syne',sans-serif;font-weight:700">Code Smells — Deuda técnica</h4>
+      <p style="font-size:14px;color:var(--text2)">Código que funciona pero que podría mejorar: métodos demasiado largos, variables sin usar, duplicación sutil. SonarQube estima el tiempo que tomaría corregirlos.</p>
+    </div>
+    <div class="card">
+      <h4 style="color:var(--purple);margin-bottom:.6rem;font-family:'Syne',sans-serif;font-weight:700">Duplications — Duplicación</h4>
+      <p style="font-size:14px;color:var(--text2)">Bloques de código idéntico o muy similar. Alta duplicación = más superficie para introducir bugs al cambiar lógica en un lugar y olvidar actualizarla en el otro.</p>
+    </div>
+  </div>
+
+  <h3>El dashboard de cobertura por archivo</h3>
+  <p>En SonarQube, haz clic en <strong>Code</strong> y luego en cada archivo de <code>src/</code>. Verás línea por línea cuáles están cubiertas (verde) y cuáles no (rojo). Para este proyecto, las líneas rojas deberían ser pocas porque el <code>__repr__</code> a veces no es llamado directamente.</p>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-a">Reto 5 · Avanzado</span>
+      <span class="rtitle">Introducir un code smell intencional</span>
+    </div>
+    <p style="font-size:14.5px">En <code>src/notas.py</code>, duplica el método <code>promedio_estudiante</code> creando un método idéntico llamado <code>calcular_promedio</code>. Vuelve a ejecutar el pipeline. ¿SonarQube detecta la duplicación? ¿El Quality Gate falla o solo registra una advertencia? ¿Cuánto tiempo de deuda técnica le asigna? Restaura el código original al terminar.</p>
+    <textarea style="min-height:110px" placeholder="Describe lo que detectó SonarQube, si el Quality Gate pasó o falló, y tu reflexión sobre por qué la duplicación es problemática..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">SonarQube detecta bloques duplicados de más de 10 líneas por defecto. Un método duplicado de ~8 líneas puede o no activar el detector según la configuración. Si el Quality Gate no falla, busca la sección "Duplications" en el dashboard del proyecto — aparecerá como code smell aunque no bloquee el build. Esto ilustra la diferencia entre "falla el build" y "registra un problema".</div>
+    </details>
+  </div>
+
+  <div class="callout ok">
+    <strong>Al finalizar la clase</strong> deberías tener: Jenkins corriendo el pipeline de 6 stages de forma exitosa, SonarQube mostrando el dashboard del proyecto con cobertura ≥ 80%, y haber observado cómo un cambio en el código impacta directamente los resultados del pipeline y el análisis de calidad.
+  </div>
+</section>
+
+</main>
+</body>
+</html>

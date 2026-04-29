@@ -1,0 +1,1 @@
+docker run -d --name sonarqube --network calidad-net -p 9000:9000 -e SONARQUBE_USERNAME="admin" -e SONARQUBE_PASSWORD="sonar123" -e SONARQUBE_DATABASE_HOST="mariadb-server" -e SONARQUBE_DATABASE_PORT_NUMBER="3306" -e SONARQUBE_DATABASE_NAME="sonarqube" -e SONARQUBE_DATABASE_USER="sonar" -e SONARQUBE_DATABASE_PASSWORD="sonar123" mi-sonarqube 

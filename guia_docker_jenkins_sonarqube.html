@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guía Docker — Jenkins & SonarQube desde cero</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0d12;--bg2:#111620;--bg3:#181f2a;--bg4:#1e2738;
+  --border:#243044;--border2:#2e3d55;
+  --text:#dde6f0;--text2:#7a92ae;--text3:#4d6278;
+  --accent:#38bdf8;--green:#4ade80;--amber:#fbbf24;
+  --red:#f87171;--purple:#c084fc;--teal:#2dd4bf;--orange:#fb923c;
+  --py:#3b82f6;--jenkins:#f59e0b;--sonar:#06b6d4;
+  --r:8px;--rl:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:15.5px;line-height:1.72}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(10,13,18,.97);border-bottom:1px solid var(--border);backdrop-filter:blur(12px)}
+.ni{max-width:1140px;margin:0 auto;padding:0 1.5rem;display:flex;align-items:center;height:50px;gap:0;overflow-x:auto;scrollbar-width:none}
+.ni::-webkit-scrollbar{display:none}
+nav a{font-family:'Syne',sans-serif;font-size:12px;font-weight:700;color:var(--text2);text-decoration:none;padding:0 13px;height:50px;display:flex;align-items:center;white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;letter-spacing:.02em}
+nav a:hover{color:var(--text);border-bottom-color:var(--accent)}
+.nl{font-family:'Syne',sans-serif;font-weight:800;font-size:14px;color:var(--accent);padding-left:0 !important;border-bottom:none !important;margin-right:10px}
+
+/* HERO */
+.hero{padding:4.5rem 1.5rem 3.5rem;text-align:center;border-bottom:1px solid var(--border);position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 900px 400px at 50% 0%,rgba(56,189,248,.06),transparent);pointer-events:none}
+.hchip{display:inline-flex;align-items:center;gap:6px;background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.3);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:11px;padding:4px 13px;border-radius:20px;margin-bottom:1.75rem;letter-spacing:.07em;text-transform:uppercase}
+.hero h1{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.8rem,4.5vw,2.9rem);line-height:1.15;margin-bottom:.9rem}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{color:var(--text2);max-width:640px;margin:0 auto 2rem;font-size:16.5px}
+.hpills{display:flex;flex-wrap:wrap;justify-content:center;gap:7px}
+.pill{font-family:'JetBrains Mono',monospace;font-size:11.5px;padding:4px 11px;border-radius:4px;border:1px solid var(--border);color:var(--text2);background:var(--bg2)}
+.pill.py{border-color:rgba(59,130,246,.4);color:#93c5fd}
+.pill.jk{border-color:rgba(245,158,11,.4);color:#fcd34d}
+.pill.sq{border-color:rgba(6,182,212,.4);color:#67e8f9}
+.pill.dk{border-color:rgba(74,222,128,.4);color:#86efac}
+
+/* MAIN */
+.main{max-width:1140px;margin:0 auto;padding:3rem 1.5rem 6rem}
+section{margin-bottom:4.5rem;scroll-margin-top:66px}
+.sdiv{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent);margin:4rem 0}
+
+/* HEADINGS */
+h2{font-family:'Syne',sans-serif;font-weight:800;font-size:1.7rem;color:var(--text);margin-bottom:1.5rem;display:flex;align-items:center;gap:12px}
+.sn{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;color:var(--accent);background:rgba(56,189,248,.1);border:1px solid rgba(56,189,248,.25);padding:3px 9px;border-radius:4px;flex-shrink:0}
+h3{font-family:'Syne',sans-serif;font-weight:700;font-size:1.12rem;color:var(--text);margin:2.25rem 0 .85rem}
+p{margin-bottom:.9rem;color:var(--text)}
+strong{font-weight:600;color:var(--text)}
+code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:var(--bg3);border:1px solid var(--border2);padding:1px 6px;border-radius:4px;color:var(--teal)}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+ul{margin:.4rem 0 .9rem 1.5rem;color:var(--text)}
+li{margin-bottom:.35rem;font-size:14.5px;line-height:1.7}
+
+/* CODE BLOCKS */
+.clabel{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.09em;margin-bottom:4px;display:flex;align-items:center;gap:7px}
+.clabel span{padding:2px 7px;border-radius:3px;font-size:10px;border:1px solid}
+.clabel .lmac{background:rgba(74,222,128,.1);border-color:rgba(74,222,128,.3);color:#86efac}
+.clabel .lwin{background:rgba(96,165,250,.1);border-color:rgba(96,165,250,.3);color:#93c5fd}
+.clabel .ldocker{background:rgba(6,182,212,.1);border-color:rgba(6,182,212,.3);color:#67e8f9}
+.clabel .ljenkins{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:#fcd34d}
+pre{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;overflow-x:auto;margin:.85rem 0}
+pre code{font-family:'JetBrains Mono',monospace;font-size:12.5px;line-height:1.9;background:none;border:none;padding:0;color:var(--text)}
+.cm{color:#3d5269}.ck{color:#ff7b72}.cs{color:#a5d6ff}.cv{color:#79c0ff}
+.cf{color:#ffa657}.ce{color:#d2a8ff}.cc{color:#56d364}.cw{color:#e3b341}
+
+/* TABS */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:0}
+.tab{font-family:'JetBrains Mono',monospace;font-size:12px;padding:8px 18px;cursor:pointer;border-bottom:2px solid transparent;color:var(--text2);transition:color .15s,border-color .15s;user-select:none}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-content{display:none;background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:1.25rem 1.5rem}
+.tab-content.active{display:block}
+.tabwrap{margin:.85rem 0}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--rl);padding:1.5rem;margin-bottom:1.25rem}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1.25rem}
+
+/* FILE TREE */
+.tree{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:2}
+.tree .dir{color:var(--amber)}
+.tree .dkf{color:var(--teal)}
+.tree .root{color:var(--accent);font-weight:700}
+
+/* CALLOUTS */
+.callout{border-radius:var(--r);padding:1rem 1.25rem;margin:1.25rem 0;border-left:3px solid;font-size:14.5px;line-height:1.7}
+.callout.info{background:rgba(56,189,248,.06);border-color:var(--accent);color:#b0ddf5}
+.callout.warn{background:rgba(251,191,36,.06);border-color:var(--amber);color:#f5d97a}
+.callout.ok{background:rgba(74,222,128,.06);border-color:var(--green);color:#a0e9b5}
+.callout.err{background:rgba(248,113,113,.06);border-color:var(--red);color:#fca5a5}
+.callout strong{font-weight:600}
+
+/* STEPS */
+.steps{margin:1.25rem 0}
+.step{display:grid;grid-template-columns:38px 1fr;gap:1rem;margin-bottom:1.75rem}
+.snum{width:34px;height:34px;border-radius:50%;background:var(--bg3);border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:13.5px;color:var(--accent);flex-shrink:0;margin-top:3px}
+.step h4{font-family:'DM Sans',sans-serif;font-weight:600;font-size:15px;color:var(--text);margin-bottom:.5rem}
+
+/* FLOW DIAGRAM */
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:0;margin:1.25rem 0}
+.fbox{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r);padding:.7rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text);text-align:center;flex-shrink:0}
+.fbox .flabel{font-weight:600}
+.fbox.dk .flabel{color:var(--teal)}
+.fbox.jk .flabel{color:var(--jenkins)}
+.fbox.sq .flabel{color:var(--sonar)}
+.fbox.gh .flabel{color:var(--purple)}
+.farrow{color:var(--border2);font-size:18px;padding:0 4px;flex-shrink:0}
+
+/* ERROR BLOCK */
+.errblock{background:rgba(248,113,113,.05);border:1px solid rgba(248,113,113,.2);border-radius:var(--r);padding:1rem 1.25rem;margin:.85rem 0;font-family:'JetBrains Mono',monospace;font-size:12.5px;color:#fca5a5;line-height:1.8}
+.errblock .etitle{font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.5rem}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse;font-size:13.5px;margin:.85rem 0}
+thead tr{background:var(--bg3)}
+th{padding:9px 14px;text-align:left;border-bottom:1px solid var(--border);color:var(--text2);font-weight:600}
+td{padding:9px 14px;border-bottom:1px solid var(--border)}
+tr:nth-child(even){background:var(--bg3)}
+
+/* PRINT */
+@media print{
+  nav{display:none}
+  body{background:#fff;color:#000;font-size:13px}
+  .hero{background:#f5f5f5;padding:1.5rem}
+  .hero h1,h2,h3{color:#000}
+  pre,code{background:#f0f0f0 !important;color:#000 !important;border:1px solid #ccc}
+  .callout,.card{border:1px solid #ccc;background:#fafafa}
+  section{page-break-inside:avoid}
+  .tab-content{display:block !important;border-top:1px solid #ccc}
+  .tabs{display:none}
+}
+
+@media(max-width:640px){
+  .main{padding:2rem 1rem 4rem}
+  h2{font-size:1.3rem}
+  .hero h1{font-size:1.6rem}
+  .step{grid-template-columns:30px 1fr}
+  pre{font-size:11.5px;padding:1rem}
+  .flow{flex-direction:column;align-items:flex-start}
+  .farrow{transform:rotate(90deg)}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a class="nl" href="#top">Docker Lab</a>
+    <a href="#arquitectura">Arquitectura</a>
+    <a href="#dockerfiles">Dockerfiles</a>
+    <a href="#red">Red y Volúmenes</a>
+    <a href="#contenedores">Contenedores</a>
+    <a href="#jenkins-config">Jenkins</a>
+    <a href="#sonar-token">Token SonarQube</a>
+    <a href="#troubleshooting">Errores comunes</a>
+    <a href="#referencia">Referencia rápida</a>
+  </div>
+</nav>
+
+<div id="top" class="hero">
+  <div class="hchip">Calidad del Software · Sesión Docker CI/CD</div>
+  <h1>Jenkins + SonarQube<br><em>con Docker desde cero</em></h1>
+  <p>Construye, configura y conecta los contenedores de Jenkins y SonarQube para ejecutar el pipeline de CI/CD del proyecto de notas universitarias.</p>
+  <div class="hpills">
+    <span class="pill dk">Docker</span>
+    <span class="pill jk">Jenkins 2.555.1-lts</span>
+    <span class="pill sq">SonarQube 2026.2.1</span>
+    <span class="pill py">Python 3</span>
+    <span class="pill dk">sonar-scanner CLI</span>
+    <span class="pill">GitHub</span>
+  </div>
+</div>
+
+<main class="main">
+
+<!-- ══════════════════════════ ARQUITECTURA ══════════════════════════ -->
+<section id="arquitectura">
+  <h2><span class="sn">01</span> Arquitectura del laboratorio</h2>
+
+  <p>El laboratorio usa <strong>tres contenedores Docker</strong> que se comunican entre sí a través de una red interna llamada <code>calidad-net</code>. Desde tu máquina accedes a Jenkins y SonarQube por <code>localhost</code>, pero entre contenedores se comunican por nombre.</p>
+
+  <div class="flow">
+    <div class="fbox gh"><span style="font-size:10px;color:var(--text3);display:block">Repositorio</span><span class="flabel">GitHub</span><br><span style="font-size:10px;color:var(--text3)">duvanfr/CS1</span></div>
+    <div class="farrow">→</div>
+    <div class="fbox jk"><span style="font-size:10px;color:var(--text3);display:block">:8080</span><span class="flabel">Jenkins</span><br><span style="font-size:10px;color:var(--text3)">mi-jenkins</span></div>
+    <div class="farrow">→</div>
+    <div class="fbox sq"><span style="font-size:10px;color:var(--text3);display:block">:9000</span><span class="flabel">SonarQube</span><br><span style="font-size:10px;color:var(--text3)">mi-sonarqube</span></div>
+  </div>
+  <p style="font-size:13.5px;color:var(--text2);margin-top:.25rem">Todos los contenedores viven en la red <code>calidad-net</code>. Jenkins llega a SonarQube por <code>http://sonarqube:9000</code>.</p>
+
+  <div class="g2" style="margin-top:1.5rem">
+    <div class="card">
+      <h4 style="font-family:'Syne',sans-serif;font-weight:700;color:var(--jenkins);margin-bottom:.5rem">Jenkins</h4>
+      <ul style="margin-left:1.2rem">
+        <li>Puerto web: <code>8080</code></li>
+        <li>Puerto agentes: <code>50000</code></li>
+        <li>Datos en: <code>jenkins_home/</code></li>
+        <li>Incluye: Python 3, pip, sonar-scanner</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="font-family:'Syne',sans-serif;font-weight:700;color:var(--sonar);margin-bottom:.5rem">SonarQube</h4>
+      <ul style="margin-left:1.2rem">
+        <li>Puerto web: <code>9000</code></li>
+        <li>Puerto Elasticsearch: <code>9001</code></li>
+        <li>Edición: Developer 2026.2.1</li>
+        <li>Credenciales: <code>admin / admin</code></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>Requisito previo:</strong> Docker Desktop debe estar corriendo en tu máquina antes de ejecutar cualquier comando de esta guía. En Mac aparece en la barra de menú superior; en Windows en la bandeja del sistema.
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ DOCKERFILES ══════════════════════════ -->
+<section id="dockerfiles">
+  <h2><span class="sn">02</span> Los Dockerfiles del proyecto</h2>
+
+  <p>El proyecto tiene dos Dockerfiles, uno por servicio. Están en sus propias carpetas dentro del repositorio.</p>
+
+  <div class="tree">
+    <span class="root">CS1/</span><br>
+    &nbsp;&nbsp;├── <span class="dir">jenkins/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="dkf">Dockerfile</span> &nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># imagen de Jenkins con Python + sonar-scanner</span><br>
+    &nbsp;&nbsp;├── <span class="dir">sonarqube/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="dkf">Dockerfile</span> &nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># imagen de SonarQube Developer</span><br>
+    &nbsp;&nbsp;└── <span class="dkf">Jenkinsfile</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--text3)"># pipeline declarativo de CI/CD</span>
+  </div>
+
+  <h3>Dockerfile de Jenkins</h3>
+  <p>La imagen base <code>jenkins/jenkins:2.555.1-lts</code> solo trae Jenkins y Java. Necesitamos agregarle Python, pip y sonar-scanner porque el pipeline los necesita para correr las pruebas y analizar el código.</p>
+
+  <span class="clabel"><span class="ldocker">Dockerfile</span> jenkins/Dockerfile</span>
+  <pre><code><span class="ck">FROM</span> jenkins/jenkins:<span class="cv">2.555.1-lts</span>
+
+<span class="cm"># Cambiamos a root para poder instalar paquetes del sistema</span>
+<span class="ck">USER</span> root
+
+<span class="cm"># Instalamos Python3, pip y herramientas de descarga</span>
+<span class="ck">RUN</span> apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
+    python3-venv \
+    unzip \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+<span class="cm"># Debian 13 bloquea pip de forma global por defecto.</span>
+<span class="cm"># Esta variable lo habilita dentro del contenedor (es seguro hacerlo aquí).</span>
+<span class="ck">ENV</span> PIP_BREAK_SYSTEM_PACKAGES=<span class="cv">1</span>
+
+<span class="cm"># Descargamos e instalamos sonar-scanner CLI</span>
+<span class="ck">RUN</span> curl -sSLo /tmp/sonar-scanner.zip \
+    https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-6.2.1.4610-linux-x64.zip \
+    && unzip /tmp/sonar-scanner.zip -d /opt \
+    && mv /opt/sonar-scanner-6.2.1.4610-linux-x64 /opt/sonar-scanner \
+    && ln -s /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner \
+    && rm /tmp/sonar-scanner.zip
+
+<span class="cm"># Volvemos al usuario jenkins por seguridad</span>
+<span class="ck">USER</span> jenkins
+
+<span class="ck">EXPOSE</span> <span class="cv">8080</span>
+<span class="ck">EXPOSE</span> <span class="cv">50000</span></code></pre>
+
+  <h3>Dockerfile de SonarQube</h3>
+  <p>La imagen de SonarQube es mucho más simple — solo expone los puertos sobre la imagen oficial.</p>
+
+  <span class="clabel"><span class="ldocker">Dockerfile</span> sonarqube/Dockerfile</span>
+  <pre><code><span class="ck">FROM</span> sonarqube:<span class="cv">2026.2.1-developer</span>
+
+<span class="ck">EXPOSE</span> <span class="cv">9000</span>   <span class="cm"># interfaz web</span>
+<span class="ck">EXPOSE</span> <span class="cv">9001</span>   <span class="cm"># Elasticsearch interno</span></code></pre>
+
+  <h3>Construir las imágenes</h3>
+  <p>Ejecuta estos comandos desde la carpeta raíz del proyecto <code>CS1/</code>. El punto al final indica que el Dockerfile está en esa subcarpeta.</p>
+
+  <div class="tabwrap">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'build-mac')">Mac / Linux</div>
+      <div class="tab" onclick="switchTab(this,'build-win')">Windows (PowerShell)</div>
+    </div>
+    <div id="build-mac" class="tab-content active">
+      <span class="clabel"><span class="lmac">Terminal — Mac</span></span>
+      <pre><code><span class="cm"># Desde la carpeta CS1/</span>
+<span class="cm"># Construir Jenkins</span>
+DOCKER_BUILDKIT=0 docker build -t mi-jenkins ./jenkins/.
+
+<span class="cm"># Construir SonarQube</span>
+DOCKER_BUILDKIT=0 docker build -t mi-sonarqube ./sonarqube/.</code></pre>
+      <p style="font-size:13.5px;color:var(--text2);margin-top:.5rem">En Mac es necesario <code>DOCKER_BUILDKIT=0</code> para evitar el error de permisos en <code>~/.docker/buildx</code>.</p>
+    </div>
+    <div id="build-win" class="tab-content">
+      <span class="clabel"><span class="lwin">PowerShell — Windows</span></span>
+      <pre><code><span class="cm"># Desde la carpeta CS1\</span>
+<span class="cm"># Construir Jenkins</span>
+docker build -t mi-jenkins .\jenkins\.
+
+<span class="cm"># Construir SonarQube</span>
+docker build -t mi-sonarqube .\sonarqube\.</code></pre>
+    </div>
+  </div>
+
+  <p>Al terminar, verifica que las imágenes existen:</p>
+  <pre><code>docker images</code></pre>
+  <p style="font-size:13.5px;color:var(--text2)">Deberías ver <code>mi-jenkins</code> (~1 GB) y <code>mi-sonarqube</code> en la lista.</p>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ RED Y VOLÚMENES ══════════════════════════ -->
+<section id="red">
+  <h2><span class="sn">03</span> Red Docker y volúmenes persistentes</h2>
+
+  <h3>Crear la red compartida</h3>
+  <p>La red <code>calidad-net</code> permite que Jenkins y SonarQube se comuniquen por nombre de contenedor. Solo necesitas crearla una vez.</p>
+
+  <pre><code>docker network create calidad-net</code></pre>
+
+  <p>Para verificar que existe:</p>
+  <pre><code>docker network ls</code></pre>
+
+  <h3>¿Por qué usar un volumen?</h3>
+  <p>Sin volumen, <strong>cada vez que el contenedor se reinicia o se borra, pierdes toda la configuración</strong>: plugins instalados, jobs creados, credenciales, historial de builds. Con un volumen, esos datos se guardan en una carpeta de tu máquina y el contenedor los lee al arrancar.</p>
+
+  <div class="g2">
+    <div class="card">
+      <h4 style="font-family:'Syne',sans-serif;font-weight:700;color:var(--red);margin-bottom:.5rem">Sin volumen</h4>
+      <ul style="margin-left:1.2rem">
+        <li>Datos dentro del contenedor</li>
+        <li><code>docker rm jenkins</code> → todo perdido</li>
+        <li>Reconfigurar desde cero cada vez</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4 style="font-family:'Syne',sans-serif;font-weight:700;color:var(--green);margin-bottom:.5rem">Con volumen</h4>
+      <ul style="margin-left:1.2rem">
+        <li>Datos en tu máquina local</li>
+        <li><code>docker rm jenkins</code> → datos intactos</li>
+        <li>Al recrear el contenedor, todo vuelve</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Tipo de volumen: bind mount</h3>
+  <p>Usamos un <strong>bind mount</strong>: una carpeta real de tu sistema de archivos mapeada al contenedor. La carpeta <code>jenkins_home/</code> vive dentro de la carpeta <code>jenkins/</code> del proyecto.</p>
+
+  <div class="tabwrap">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'vol-mac')">Mac / Linux</div>
+      <div class="tab" onclick="switchTab(this,'vol-win')">Windows</div>
+    </div>
+    <div id="vol-mac" class="tab-content active">
+      <p style="font-size:14px;color:var(--text2)">La carpeta se crea automáticamente al primer arranque. Si quieres crearla manualmente:</p>
+      <pre><code>mkdir -p /ruta/al/proyecto/CS1/jenkins/jenkins_home</code></pre>
+      <p style="font-size:14px;color:var(--text2);margin-top:.75rem">Si Jenkins no puede escribir en la carpeta, arregla los permisos:</p>
+      <pre><code>sudo chown -R 1000:1000 ./jenkins/jenkins_home</code></pre>
+    </div>
+    <div id="vol-win" class="tab-content">
+      <p style="font-size:14px;color:var(--text2)">La carpeta se crea automáticamente. Para crearla manualmente desde CMD:</p>
+      <pre><code>mkdir C:\ruta\al\proyecto\CS1\jenkins\jenkins_home</code></pre>
+      <p style="font-size:14px;color:var(--text2);margin-top:.75rem">En Windows, Docker Desktop necesita permiso de acceso a la unidad. Ve a <strong>Settings → Resources → File sharing</strong> y agrega la unidad C: si no está.</p>
+    </div>
+  </div>
+
+  <div class="callout info">
+    <strong>Para empezar de cero</strong> (borrar toda la configuración de Jenkins): borra el contenedor y luego elimina la carpeta <code>jenkins_home/</code>. Al recrear el contenedor, Jenkins arranca como nuevo.
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ CONTENEDORES ══════════════════════════ -->
+<section id="contenedores">
+  <h2><span class="sn">04</span> Levantar los contenedores</h2>
+
+  <h3>Jenkins</h3>
+
+  <div class="tabwrap">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'jenkins-mac')">Mac / Linux</div>
+      <div class="tab" onclick="switchTab(this,'jenkins-win-ps')">Windows PowerShell</div>
+      <div class="tab" onclick="switchTab(this,'jenkins-win-cmd')">Windows CMD</div>
+    </div>
+    <div id="jenkins-mac" class="tab-content active">
+      <pre><code>docker run -d \
+  --name jenkins \
+  --network calidad-net \
+  -p 8080:8080 \
+  -p 50000:50000 \
+  -e JENKINS_USERNAME="admin" \
+  -e JENKINS_PASSWORD="admin123" \
+  -v /ruta/al/proyecto/CS1/jenkins/jenkins_home:/var/jenkins_home \
+  mi-jenkins</code></pre>
+    </div>
+    <div id="jenkins-win-ps" class="tab-content">
+      <pre><code>docker run -d `
+  --name jenkins `
+  --network calidad-net `
+  -p 8080:8080 `
+  -p 50000:50000 `
+  -e JENKINS_USERNAME="admin" `
+  -e JENKINS_PASSWORD="admin123" `
+  -v C:\ruta\proyecto\CS1\jenkins\jenkins_home:/var/jenkins_home `
+  mi-jenkins</code></pre>
+    </div>
+    <div id="jenkins-win-cmd" class="tab-content">
+      <pre><code>docker run -d --name jenkins --network calidad-net -p 8080:8080 -p 50000:50000 -e JENKINS_USERNAME="admin" -e JENKINS_PASSWORD="admin123" -v C:\ruta\proyecto\CS1\jenkins\jenkins_home:/var/jenkins_home mi-jenkins</code></pre>
+    </div>
+  </div>
+
+  <table>
+    <thead><tr><th>Parámetro</th><th>Qué hace</th></tr></thead>
+    <tbody>
+      <tr><td><code>-d</code></td><td>Corre en background (detached). El terminal queda libre.</td></tr>
+      <tr><td><code>--name jenkins</code></td><td>Nombre del contenedor — SonarQube lo usará para comunicarse.</td></tr>
+      <tr><td><code>--network calidad-net</code></td><td>Lo conecta a la red compartida con SonarQube.</td></tr>
+      <tr><td><code>-p 8080:8080</code></td><td>Mapea el puerto: tu máquina:contenedor.</td></tr>
+      <tr><td><code>-v ruta_local:/var/jenkins_home</code></td><td>Volumen persistente. Jenkins guarda todo ahí.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>SonarQube</h3>
+
+  <div class="tabwrap">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab(this,'sonar-mac')">Mac / Linux</div>
+      <div class="tab" onclick="switchTab(this,'sonar-win')">Windows PowerShell</div>
+    </div>
+    <div id="sonar-mac" class="tab-content active">
+      <pre><code>docker run -d \
+  --name sonarqube \
+  --network calidad-net \
+  -p 9000:9000 \
+  mi-sonarqube</code></pre>
+    </div>
+    <div id="sonar-win" class="tab-content">
+      <pre><code>docker run -d `
+  --name sonarqube `
+  --network calidad-net `
+  -p 9000:9000 `
+  mi-sonarqube</code></pre>
+    </div>
+  </div>
+
+  <div class="callout warn">
+    <strong>SonarQube tarda ~1 minuto en arrancar.</strong> Si abres <code>http://localhost:9000</code> y no carga, espera y vuelve a intentarlo. Puedes ver el progreso con <code>docker logs -f sonarqube</code>.
+  </div>
+
+  <h3>Comandos útiles de gestión</h3>
+
+  <pre><code><span class="cm"># Ver contenedores corriendo</span>
+docker ps
+
+<span class="cm"># Ver logs en tiempo real</span>
+docker logs -f jenkins
+docker logs -f sonarqube
+
+<span class="cm"># Detener sin borrar (los datos del volumen se conservan)</span>
+docker stop jenkins
+docker stop sonarqube
+
+<span class="cm"># Volver a arrancar un contenedor detenido</span>
+docker start jenkins
+docker start sonarqube
+
+<span class="cm"># Borrar contenedor (el volumen jenkins_home/ permanece intacto)</span>
+docker rm jenkins</code></pre>
+
+  <div class="callout ok">
+    <strong>Flujo correcto para reiniciar:</strong> <code>docker stop jenkins</code> → <code>docker start jenkins</code>. Nunca es necesario borrar y recrear el contenedor a menos que quieras empezar de cero o cambiar la imagen.
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ JENKINS CONFIG ══════════════════════════ -->
+<section id="jenkins-config">
+  <h2><span class="sn">05</span> Configurar Jenkins para el repositorio de GitHub</h2>
+
+  <p>Jenkins necesita 4 configuraciones para poder leer el <code>Jenkinsfile</code> del repositorio <code>github.com/duvanfr/CS1</code> y ejecutar el pipeline.</p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="snum">1</div>
+      <div class="step-body">
+        <h4>Primer acceso — contraseña inicial</h4>
+        <p style="font-size:14px;color:var(--text2)">Abre <a href="http://localhost:8080" target="_blank">http://localhost:8080</a>. Jenkins pedirá una contraseña de desbloqueo. Obtenla con:</p>
+        <pre><code>docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></pre>
+        <p style="font-size:14px;color:var(--text2)">Pega el resultado en la pantalla de desbloqueo. Luego selecciona <strong>Install suggested plugins</strong> y crea el usuario administrador.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">2</div>
+      <div class="step-body">
+        <h4>Instalar plugins adicionales</h4>
+        <p style="font-size:14px;color:var(--text2)">Ve a <strong>Manage Jenkins → Plugins → Available plugins</strong> e instala:</p>
+        <div style="display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0">
+          <code>SonarQube Scanner</code>
+          <code>HTML Publisher</code>
+          <code>Timestamper</code>
+        </div>
+        <p style="font-size:13.5px;color:var(--text2)">Los plugins <code>Pipeline</code>, <code>Git</code> y <code>JUnit</code> vienen con los plugins sugeridos del paso anterior. Reinicia Jenkins al terminar.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">3</div>
+      <div class="step-body">
+        <h4>Crear credenciales de GitHub</h4>
+        <p style="font-size:14px;color:var(--text2)">Ve a <strong>Manage Jenkins → Credentials → System → Global credentials → Add Credentials</strong>:</p>
+        <table>
+          <tbody>
+            <tr><td style="width:180px"><strong>Kind</strong></td><td>Username with password</td></tr>
+            <tr><td><strong>Username</strong></td><td><code>duvanfr</code> (tu usuario de GitHub)</td></tr>
+            <tr><td><strong>Password</strong></td><td>Personal Access Token de GitHub (ver abajo)</td></tr>
+            <tr><td><strong>ID</strong></td><td><code>github-credentials</code></td></tr>
+          </tbody>
+        </table>
+        <div class="callout info" style="margin-top:.75rem">
+          <strong>Cómo crear el Personal Access Token en GitHub:</strong> Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token → marca el scope <code>repo</code> → Generate. Copia el token — solo se muestra una vez.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">4</div>
+      <div class="step-body">
+        <h4>Crear el job Pipeline</h4>
+        <p style="font-size:14px;color:var(--text2)">En el dashboard de Jenkins: <strong>New Item</strong></p>
+        <ul>
+          <li><strong>Nombre:</strong> <code>notas-universitarias</code></li>
+          <li><strong>Tipo:</strong> Pipeline → OK</li>
+        </ul>
+        <p style="font-size:14px;color:var(--text2);margin-top:.75rem">En la configuración del job:</p>
+        <p style="font-size:14px;color:var(--text2)"><strong>General:</strong> marca "GitHub project" → URL: <code>https://github.com/duvanfr/CS1</code></p>
+        <p style="font-size:14px;color:var(--text2)"><strong>Build Triggers:</strong> marca "Poll SCM" → Schedule: <code>H/5 * * * *</code></p>
+        <p style="font-size:14px;color:var(--text2)"><strong>Pipeline:</strong></p>
+        <table>
+          <tbody>
+            <tr><td style="width:200px"><strong>Definition</strong></td><td>Pipeline script from SCM</td></tr>
+            <tr><td><strong>SCM</strong></td><td>Git</td></tr>
+            <tr><td><strong>Repository URL</strong></td><td><code>https://github.com/duvanfr/CS1.git</code></td></tr>
+            <tr><td><strong>Credentials</strong></td><td><code>github-credentials</code></td></tr>
+            <tr><td><strong>Branch</strong></td><td><code>*/develop</code></td></tr>
+            <tr><td><strong>Script Path</strong></td><td><code>Jenkinsfile</code></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:14px;color:var(--text2);margin-top:.75rem">Clic en <strong>Save</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">5</div>
+      <div class="step-body">
+        <h4>Registrar SonarQube en Jenkins</h4>
+        <p style="font-size:14px;color:var(--text2)">Ve a <strong>Manage Jenkins → System → SonarQube servers</strong>:</p>
+        <ul>
+          <li>Marca <strong>"Environment variables"</strong></li>
+          <li>Clic en <strong>Add SonarQube</strong></li>
+        </ul>
+        <table style="margin-top:.5rem">
+          <tbody>
+            <tr><td style="width:220px"><strong>Name</strong></td><td><code>SonarQube</code> — debe ser exactamente este nombre</td></tr>
+            <tr><td><strong>Server URL</strong></td><td><code>http://sonarqube:9000</code></td></tr>
+            <tr><td><strong>Authentication token</strong></td><td>Credencial con el token de SonarQube (ver sección 06)</td></tr>
+          </tbody>
+        </table>
+        <div class="callout warn" style="margin-top:.75rem">
+          El nombre <code>SonarQube</code> debe coincidir exactamente con lo que usa el Jenkinsfile: <code>withSonarQubeEnv("SonarQube")</code>. Mayúsculas incluidas.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ TOKEN SONARQUBE ══════════════════════════ -->
+<section id="sonar-token">
+  <h2><span class="sn">06</span> Generar el token de SonarQube</h2>
+
+  <p>Jenkins necesita un token para autenticarse con SonarQube al enviar el análisis. El token reemplaza la contraseña.</p>
+
+  <div class="steps">
+
+    <div class="step">
+      <div class="snum">1</div>
+      <div class="step-body">
+        <h4>Ingresar a SonarQube</h4>
+        <p style="font-size:14px;color:var(--text2)">Abre <a href="http://localhost:9000" target="_blank">http://localhost:9000</a></p>
+        <table>
+          <tbody>
+            <tr><td style="width:140px"><strong>Usuario</strong></td><td><code>admin</code></td></tr>
+            <tr><td><strong>Contraseña</strong></td><td><code>admin</code> (te pedirá cambiarla al primer login)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">2</div>
+      <div class="step-body">
+        <h4>Ir a Security en My Account</h4>
+        <p style="font-size:14px;color:var(--text2)">Clic en tu avatar (esquina superior derecha) → <strong>My Account</strong> → pestaña <strong>Security</strong></p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">3</div>
+      <div class="step-body">
+        <h4>Generar el token</h4>
+        <p style="font-size:14px;color:var(--text2)">En la sección <strong>Generate Tokens</strong>:</p>
+        <table>
+          <tbody>
+            <tr><td style="width:140px"><strong>Name</strong></td><td><code>jenkins-token</code></td></tr>
+            <tr><td><strong>Type</strong></td><td>Global Analysis Token</td></tr>
+            <tr><td><strong>Expires in</strong></td><td>No expiration (para el laboratorio)</td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:14px;color:var(--text2);margin-top:.5rem">Clic en <strong>Generate</strong>. El token tiene este formato:</p>
+        <pre><code>sqa_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+        <div class="callout err">
+          <strong>Copia el token inmediatamente.</strong> SonarQube no lo vuelve a mostrar. Si lo pierdes, deberás generar uno nuevo.
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">4</div>
+      <div class="step-body">
+        <h4>Guardar el token en Jenkins como credencial</h4>
+        <p style="font-size:14px;color:var(--text2)">En Jenkins: <strong>Manage Jenkins → Credentials → System → Global credentials → Add Credentials</strong></p>
+        <table>
+          <tbody>
+            <tr><td style="width:140px"><strong>Kind</strong></td><td>Secret text</td></tr>
+            <tr><td><strong>Secret</strong></td><td>pega el token de SonarQube</td></tr>
+            <tr><td><strong>ID</strong></td><td><code>sonarqube-token</code></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:14px;color:var(--text2);margin-top:.5rem">Luego en <strong>Manage Jenkins → System → SonarQube servers</strong>, selecciona <code>sonarqube-token</code> en el campo <strong>Server authentication token</strong>.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="snum">5</div>
+      <div class="step-body">
+        <h4>Configurar el webhook en SonarQube</h4>
+        <p style="font-size:14px;color:var(--text2)">El webhook permite que SonarQube notifique a Jenkins cuando termina el análisis (necesario para el Quality Gate). En SonarQube:</p>
+        <p style="font-size:14px;color:var(--text2)"><strong>Administration → Configuration → Webhooks → Create</strong></p>
+        <table>
+          <tbody>
+            <tr><td style="width:140px"><strong>Name</strong></td><td><code>Jenkins</code></td></tr>
+            <tr><td><strong>URL</strong></td><td><code>http://jenkins:8080/sonarqube-webhook/</code></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:13.5px;color:var(--text2);margin-top:.5rem">Usa el nombre <code>jenkins</code> (nombre del contenedor) porque SonarQube está en la misma red <code>calidad-net</code>.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ TROUBLESHOOTING ══════════════════════════ -->
+<section id="troubleshooting">
+  <h2><span class="sn">07</span> Errores comunes y soluciones</h2>
+
+  <!-- Error 1 -->
+  <h3>Error: network calidad-net not found</h3>
+  <div class="errblock">
+    <div class="etitle">Error al ejecutar docker run</div>
+    docker: Error response from daemon: failed to set up container networking: network calidad-net not found
+  </div>
+  <p><strong>Causa:</strong> La red Docker no existe todavía.</p>
+  <p><strong>Solución:</strong> Crea la red antes de levantar los contenedores.</p>
+  <pre><code>docker network create calidad-net</code></pre>
+
+  <!-- Error 2 -->
+  <h3>Error: container name already in use</h3>
+  <div class="errblock">
+    <div class="etitle">Error al ejecutar docker run</div>
+    docker: Error response from daemon: Conflict. The container name "/jenkins" is already in use...
+  </div>
+  <p><strong>Causa:</strong> Ya existe un contenedor con ese nombre, aunque esté detenido.</p>
+  <p><strong>Solución:</strong> Elimina el contenedor viejo y vuelve a correrlo.</p>
+  <pre><code>docker rm jenkins
+docker run -d --name jenkins ...   <span class="cm"># tu comando completo</span></code></pre>
+
+  <!-- Error 3 -->
+  <h3>Error: permission denied en ~/.docker/buildx (Mac)</h3>
+  <div class="errblock">
+    <div class="etitle">Error al ejecutar docker build</div>
+    ERROR: failed to build: stat /Users/usuario/.docker/buildx/refs/...: permission denied
+  </div>
+  <p><strong>Causa:</strong> Docker BuildKit tiene un problema de permisos en Mac con Docker Desktop.</p>
+  <p><strong>Solución:</strong> Desactiva BuildKit con la variable de entorno.</p>
+  <pre><code>DOCKER_BUILDKIT=0 docker build -t mi-jenkins ./jenkins/.</code></pre>
+
+  <!-- Error 4 -->
+  <h3>Error: python3 not found (en el pipeline)</h3>
+  <div class="errblock">
+    <div class="etitle">Stage 2 del pipeline — Jenkins Console Output</div>
+    + python3 --version<br>
+    /var/jenkins_home/workspace/.../script.sh: python3: not found
+  </div>
+  <p><strong>Causa:</strong> La imagen de Jenkins no tiene Python instalado. Ocurre si usas la imagen base sin las modificaciones del Dockerfile de este proyecto.</p>
+  <p><strong>Solución:</strong> Asegúrate de estar usando el Dockerfile de la carpeta <code>jenkins/</code> que instala Python en el <code>RUN apt-get install</code>. Si reconstruiste la imagen sin ese paso, vuelve a construir con el Dockerfile correcto.</p>
+  <pre><code>DOCKER_BUILDKIT=0 docker build -t mi-jenkins ./jenkins/.</code></pre>
+
+  <!-- Error 5 -->
+  <h3>Error: externally-managed-environment (pip)</h3>
+  <div class="errblock">
+    <div class="etitle">Stage 2 del pipeline — Jenkins Console Output</div>
+    error: externally-managed-environment<br><br>
+    × This environment is externally managed<br>
+    ╰─> To install Python packages system-wide, try apt install python3-xyz...
+  </div>
+  <p><strong>Causa:</strong> Debian 13 (Trixie) bloquea la instalación global de paquetes pip por defecto para proteger los paquetes del sistema.</p>
+  <p><strong>Solución:</strong> El Dockerfile del proyecto incluye <code>ENV PIP_BREAK_SYSTEM_PACKAGES=1</code>. Si ves este error, la imagen fue construida sin esa línea. Verifica el Dockerfile y reconstruye.</p>
+  <pre><code><span class="cm"># En el Dockerfile de jenkins/ debe existir esta línea:</span>
+<span class="ck">ENV</span> PIP_BREAK_SYSTEM_PACKAGES=<span class="cv">1</span>
+
+<span class="cm"># Luego reconstruye la imagen</span>
+docker stop jenkins && docker rm jenkins
+DOCKER_BUILDKIT=0 docker build -t mi-jenkins ./jenkins/.
+docker run -d --name jenkins --network calidad-net \
+  -p 8080:8080 -p 50000:50000 \
+  -v /ruta/CS1/jenkins/jenkins_home:/var/jenkins_home \
+  mi-jenkins</code></pre>
+
+  <!-- Error 6 -->
+  <h3>SonarQube no carga en localhost:9000</h3>
+  <p><strong>Causa:</strong> SonarQube tarda aproximadamente 1 minuto en inicializar Elasticsearch internamente.</p>
+  <p><strong>Solución:</strong> Espera y recarga. Puedes monitorear el inicio con:</p>
+  <pre><code>docker logs -f sonarqube</code></pre>
+  <p style="font-size:13.5px;color:var(--text2)">Cuando veas la línea <code>SonarQube is operational</code> en los logs, ya puedes acceder al navegador.</p>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════════════════════ REFERENCIA ══════════════════════════ -->
+<section id="referencia">
+  <h2><span class="sn">08</span> Referencia rápida</h2>
+
+  <h3>Secuencia completa desde cero</h3>
+
+  <span class="clabel"><span class="lmac">Mac — Terminal</span></span>
+  <pre><code><span class="cm"># 1. Construir imágenes</span>
+DOCKER_BUILDKIT=0 docker build -t mi-jenkins ./jenkins/.
+DOCKER_BUILDKIT=0 docker build -t mi-sonarqube ./sonarqube/.
+
+<span class="cm"># 2. Crear red</span>
+docker network create calidad-net
+
+<span class="cm"># 3. Levantar Jenkins con volumen</span>
+docker run -d \
+  --name jenkins \
+  --network calidad-net \
+  -p 8080:8080 -p 50000:50000 \
+  -e JENKINS_USERNAME="admin" \
+  -e JENKINS_PASSWORD="admin123" \
+  -v /ruta/CS1/jenkins/jenkins_home:/var/jenkins_home \
+  mi-jenkins
+
+<span class="cm"># 4. Levantar SonarQube</span>
+docker run -d \
+  --name sonarqube \
+  --network calidad-net \
+  -p 9000:9000 \
+  mi-sonarqube
+
+<span class="cm"># 5. Verificar</span>
+docker ps</code></pre>
+
+  <span class="clabel"><span class="lwin">Windows — PowerShell</span></span>
+  <pre><code><span class="cm"># 1. Construir imágenes</span>
+docker build -t mi-jenkins .\jenkins\.
+docker build -t mi-sonarqube .\sonarqube\.
+
+<span class="cm"># 2. Crear red</span>
+docker network create calidad-net
+
+<span class="cm"># 3. Levantar Jenkins con volumen</span>
+docker run -d `
+  --name jenkins `
+  --network calidad-net `
+  -p 8080:8080 -p 50000:50000 `
+  -e JENKINS_USERNAME="admin" `
+  -e JENKINS_PASSWORD="admin123" `
+  -v C:\ruta\CS1\jenkins\jenkins_home:/var/jenkins_home `
+  mi-jenkins
+
+<span class="cm"># 4. Levantar SonarQube</span>
+docker run -d `
+  --name sonarqube `
+  --network calidad-net `
+  -p 9000:9000 `
+  mi-sonarqube</code></pre>
+
+  <h3>URLs del laboratorio</h3>
+  <table>
+    <thead><tr><th>Servicio</th><th>URL</th><th>Usuario</th><th>Contraseña</th></tr></thead>
+    <tbody>
+      <tr><td>Jenkins</td><td><code>http://localhost:8080</code></td><td><code>admin</code></td><td>ver <code>initialAdminPassword</code></td></tr>
+      <tr><td>SonarQube</td><td><code>http://localhost:9000</code></td><td><code>admin</code></td><td><code>admin</code> (cambiar al login)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Comandos de diagnóstico</h3>
+  <pre><code><span class="cm"># Estado de los contenedores</span>
+docker ps
+
+<span class="cm"># Logs en tiempo real</span>
+docker logs -f jenkins
+docker logs -f sonarqube
+
+<span class="cm"># Verificar que Python y sonar-scanner están en el contenedor</span>
+docker exec jenkins python3 --version
+docker exec jenkins sonar-scanner --version
+
+<span class="cm"># Ver la red y los contenedores conectados</span>
+docker network inspect calidad-net
+
+<span class="cm"># Obtener la contraseña inicial de Jenkins</span>
+docker exec jenkins cat /var/jenkins_home/secrets/initialAdminPassword</code></pre>
+
+  <div class="callout ok">
+    <strong>Checklist antes de ejecutar el pipeline:</strong> (1) Ambos contenedores en estado <code>Up</code>. (2) Plugin <code>SonarQube Scanner</code> instalado en Jenkins. (3) Servidor SonarQube configurado en <strong>Manage Jenkins → System</strong> con nombre <code>SonarQube</code>. (4) Token de SonarQube guardado como credencial en Jenkins. (5) Webhook configurado en SonarQube apuntando a <code>http://jenkins:8080/sonarqube-webhook/</code>. (6) Job Pipeline creado con SCM apuntando a la rama <code>develop</code>.
+  </div>
+</section>
+
+</main>
+
+<script>
+function switchTab(el, targetId) {
+  const wrap = el.closest('.tabwrap');
+  wrap.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  wrap.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(targetId).classList.add('active');
+}
+</script>
+</body>
+</html>
