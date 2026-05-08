@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sprint 2 — Notas Universitarias · Vulnerabilidades & SonarQube</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink:      #0f1117;
+  --ink2:     #2a2d35;
+  --ink3:     #5a5f70;
+  --paper:    #f7f4ef;
+  --paper2:   #ede9e2;
+  --paper3:   #e2ddd5;
+  --accent:   #c0392b;
+  --accent2:  #e74c3c;
+  --green:    #1a6b3c;
+  --lgreen:   #eaf4ee;
+  --amber:    #b7670a;
+  --lamber:   #fef3e2;
+  --blue:     #1a4a8a;
+  --lblue:    #eaf0fb;
+  --purple:   #6d28d9;
+  --lpurple:  #f3effe;
+  --red:      #c0392b;
+  --lred:     #fdf0ef;
+  --crit:     #7b1515;
+  --lcrit:    #fce8e8;
+  --border:   #d5cfc5;
+  --r:        6px;
+  --rl:       10px;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15.5px;
+  line-height: 1.72;
+}
+
+/* ── NAV ── */
+nav {
+  position: sticky; top: 0; z-index: 200;
+  background: var(--ink);
+  border-bottom: 3px solid var(--accent);
+}
+.ni {
+  max-width: 1120px; margin: 0 auto; padding: 0 1.5rem;
+  display: flex; align-items: center; height: 48px;
+  gap: 0; overflow-x: auto; scrollbar-width: none;
+}
+.ni::-webkit-scrollbar { display: none; }
+nav a {
+  font-family: 'DM Mono', monospace; font-size: 11.5px;
+  color: #8a8f9e; text-decoration: none; padding: 0 14px; height: 48px;
+  display: flex; align-items: center; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+}
+nav a:hover { color: #fff; border-bottom-color: var(--accent); }
+.nl {
+  font-family: 'DM Mono', monospace; font-weight: 500; font-size: 13px;
+  color: var(--accent) !important; margin-right: 12px;
+  padding-left: 0 !important; border-bottom: none !important;
+}
+
+/* ── HERO ── */
+.hero {
+  background: var(--ink);
+  padding: 5rem 1.5rem 4rem;
+  position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(
+    -45deg, transparent, transparent 40px,
+    rgba(192,57,43,.04) 40px, rgba(192,57,43,.04) 41px
+  );
+}
+.hero-inner { max-width: 1120px; margin: 0 auto; position: relative; }
+.hsprint {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  letter-spacing: .15em; text-transform: uppercase;
+  color: var(--accent); margin-bottom: 1.25rem; display: block;
+}
+.hero h1 {
+  font-family: 'Playfair Display', serif; font-weight: 900;
+  font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.1;
+  color: #fff; margin-bottom: 1rem;
+}
+.hero h1 em { font-style: italic; color: var(--accent2); }
+.hero p { color: #9aa0b2; max-width: 640px; font-size: 16px; margin-bottom: 2rem; }
+.htags { display: flex; flex-wrap: wrap; gap: 7px; }
+.htag {
+  font-family: 'DM Mono', monospace; font-size: 11px;
+  padding: 4px 11px; border-radius: 3px; border: 1px solid #2e3244; color: #7a8097;
+}
+.htag.crit { border-color: rgba(192,57,43,.5); color: #e87068; }
+.htag.warn { border-color: rgba(183,103,10,.4); color: #f5a623; }
+.htag.info { border-color: rgba(26,74,138,.4); color: #6faee8; }
+
+/* ── LAYOUT ── */
+.main { max-width: 1120px; margin: 0 auto; padding: 3rem 1.5rem 6rem; }
+section { margin-bottom: 4.5rem; scroll-margin-top: 65px; }
+.sdiv {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+  margin: 4rem 0;
+}
+
+/* ── HEADINGS ── */
+h2 {
+  font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: 1.85rem; color: var(--ink); margin-bottom: 1.4rem;
+  display: flex; align-items: center; gap: 14px;
+}
+.sn {
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+  color: var(--accent); background: var(--lred);
+  border: 1px solid rgba(192,57,43,.25); padding: 3px 9px; border-radius: 3px;
+}
+h3 {
+  font-family: 'Playfair Display', serif; font-weight: 700;
+  font-size: 1.2rem; color: var(--ink); margin: 2.25rem 0 .85rem;
+}
+p { margin-bottom: .9rem; }
+strong { font-weight: 600; }
+code {
+  font-family: 'DM Mono', monospace; font-size: 12.5px;
+  background: var(--paper2); border: 1px solid var(--border);
+  padding: 1px 6px; border-radius: 3px; color: var(--blue);
+}
+
+/* ── CODE BLOCKS ── */
+.clabel {
+  font-family: 'DM Mono', monospace; font-size: 10px; color: var(--ink3);
+  text-transform: uppercase; letter-spacing: .09em;
+  margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+}
+.clabel span {
+  padding: 2px 8px; border-radius: 3px; font-size: 10px; border: 1px solid;
+}
+.lpy  { background: #eaf0fb; border-color: #a3bfef !important; color: #1a4a8a !important; }
+.lsh  { background: var(--lgreen); border-color: #a8d5b5 !important; color: var(--green) !important; }
+.lvuln { background: var(--lcrit); border-color: rgba(192,57,43,.3) !important; color: var(--crit) !important; }
+
+pre {
+  background: var(--ink2); border: 1px solid #3a3f50;
+  border-radius: var(--r); padding: 1.25rem 1.5rem;
+  overflow-x: auto; margin: .85rem 0; position: relative;
+}
+pre code {
+  font-family: 'DM Mono', monospace; font-size: 12.5px;
+  line-height: 2; background: none; border: none; padding: 0; color: #ced4e0;
+}
+.cm  { color: #4a5268; font-style: italic; }
+.ck  { color: #ff8585; }
+.cs  { color: #98d9a0; }
+.cv  { color: #82aaff; }
+.cf  { color: #ffcb6b; }
+.ce  { color: #c792ea; }
+.cc  { color: #78dba9; }
+.cw  { color: #f5a623; }
+.vuln-line { background: rgba(192,57,43,.18); border-left: 3px solid var(--accent2); margin-left: -1.5rem; padding-left: 1.25rem; display: block; }
+
+/* ── VULN CARDS ── */
+.vuln-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap: 1rem; margin: 1.25rem 0; }
+.vcard {
+  border-radius: var(--rl); padding: 1.25rem;
+  border: 1px solid; position: relative; overflow: hidden;
+}
+.vcard::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.vcard.critica { background: var(--lcrit); border-color: rgba(192,57,43,.3); }
+.vcard.critica::before { background: linear-gradient(90deg, var(--crit), var(--accent2)); }
+.vcard.alta    { background: var(--lred);  border-color: rgba(192,57,43,.2); }
+.vcard.alta::before    { background: linear-gradient(90deg, var(--accent), #e67e22); }
+.vcard.media   { background: var(--lamber); border-color: rgba(183,103,10,.25); }
+.vcard.media::before   { background: linear-gradient(90deg, var(--amber), #f5a623); }
+.vcard.baja    { background: var(--lblue);  border-color: rgba(26,74,138,.2); }
+.vcard.baja::before    { background: linear-gradient(90deg, var(--blue), #4a90d9); }
+.vcard.ok      { background: var(--lgreen); border-color: rgba(26,107,60,.2); }
+.vcard.ok::before      { background: linear-gradient(90deg, var(--green), #2ecc71); }
+
+.vsev {
+  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .1em;
+  padding: 2px 8px; border-radius: 20px; display: inline-block; margin-bottom: .5rem;
+}
+.vsev.critica { background: rgba(192,57,43,.15); color: var(--crit); border: 1px solid rgba(192,57,43,.3); }
+.vsev.alta    { background: rgba(192,57,43,.1);  color: var(--accent); border: 1px solid rgba(192,57,43,.2); }
+.vsev.media   { background: rgba(183,103,10,.1); color: var(--amber);  border: 1px solid rgba(183,103,10,.2); }
+.vsev.baja    { background: rgba(26,74,138,.08); color: var(--blue);   border: 1px solid rgba(26,74,138,.15); }
+
+.vcard h4 { font-family: 'DM Sans', sans-serif; font-weight: 600; font-size: 14.5px; color: var(--ink); margin-bottom: .35rem; }
+.vcard .vrule { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--ink3); margin-bottom: .5rem; display: block; }
+.vcard p { font-size: 13.5px; color: var(--ink2); margin-bottom: 0; }
+
+/* ── CALLOUTS ── */
+.callout {
+  border-radius: var(--r); padding: 1rem 1.25rem;
+  margin: 1.25rem 0; border-left: 3px solid; font-size: 14.5px; line-height: 1.7;
+}
+.callout.info  { background: var(--lblue);   border-color: var(--blue);   color: var(--blue); }
+.callout.warn  { background: var(--lamber);  border-color: var(--amber);  color: var(--amber); }
+.callout.ok    { background: var(--lgreen);  border-color: var(--green);  color: var(--green); }
+.callout.crit  { background: var(--lcrit);   border-color: var(--crit);   color: var(--crit); }
+.callout strong { font-weight: 600; color: inherit; }
+
+/* ── STEPS ── */
+.steps { margin: 1.25rem 0; }
+.step { display: grid; grid-template-columns: 38px 1fr; gap: 1rem; margin-bottom: 1.75rem; }
+.snum {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: var(--ink); border: 2px solid var(--accent);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'DM Mono', monospace; font-weight: 500; font-size: 13px;
+  color: var(--accent); flex-shrink: 0; margin-top: 3px;
+}
+.step h4 { font-weight: 600; font-size: 15px; color: var(--ink); margin-bottom: .4rem; }
+
+/* ── TREE ── */
+.tree {
+  background: var(--ink2); border: 1px solid #3a3f50; border-radius: var(--r);
+  padding: 1.25rem 1.5rem; font-family: 'DM Mono', monospace; font-size: 13px; line-height: 2.1;
+}
+.tree .dir { color: var(--cf); }
+.tree .pyf { color: #82aaff; }
+.tree .new { color: var(--accent2); font-weight: 500; }
+.tree .root { color: var(--accent); font-weight: 500; }
+.tree .cm { color: #4a5268; font-style: italic; }
+
+/* ── BEFORE/AFTER ── */
+.baGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0; }
+.ba-box { border-radius: var(--r); overflow: hidden; }
+.ba-head {
+  font-family: 'DM Mono', monospace; font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: .08em; padding: 7px 14px;
+  display: flex; align-items: center; gap: 6px;
+}
+.ba-box.bad  .ba-head { background: var(--lcrit);  color: var(--crit);  border: 1px solid rgba(192,57,43,.3); }
+.ba-box.good .ba-head { background: var(--lgreen); color: var(--green); border: 1px solid rgba(26,107,60,.3); }
+.ba-box pre { margin: 0; border-radius: 0 0 var(--r) var(--r); }
+
+/* ── RETOS ── */
+.reto {
+  background: var(--paper2); border: 1px solid var(--border);
+  border-radius: var(--rl); padding: 1.5rem; margin: 2rem 0;
+  border-left: 4px solid var(--accent);
+}
+.reto-h { display: flex; align-items: center; gap: 10px; margin-bottom: .9rem; flex-wrap: wrap; }
+.rbadge {
+  font-family: 'DM Mono', monospace; font-weight: 500; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: .09em; padding: 3px 10px; border-radius: 20px;
+}
+.rb-b { background: var(--lgreen); color: var(--green); border: 1px solid rgba(26,107,60,.25); }
+.rb-i { background: var(--lamber); color: var(--amber); border: 1px solid rgba(183,103,10,.25); }
+.rb-a { background: var(--lred);   color: var(--accent);border: 1px solid rgba(192,57,43,.25); }
+.rtitle { font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 1rem; color: var(--ink); }
+.reto textarea {
+  width: 100%; min-height: 80px; background: var(--paper);
+  border: 1px solid var(--border); border-radius: var(--r);
+  color: var(--ink); font-family: 'DM Mono', monospace; font-size: 12.5px;
+  padding: 10px 12px; resize: vertical; line-height: 1.6; margin-top: .6rem;
+}
+.reto textarea:focus { outline: none; border-color: var(--accent); }
+.reto textarea::placeholder { color: var(--ink3); }
+
+details.pista summary {
+  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--amber);
+  cursor: pointer; list-style: none; display: flex; align-items: center;
+  gap: 6px; margin-top: .6rem; user-select: none;
+}
+details.pista summary::before { content: '▶'; font-size: 9px; transition: transform .2s; }
+details.pista[open] summary::before { transform: rotate(90deg); }
+.pista-body {
+  background: var(--lamber); border-left: 2px solid var(--amber);
+  padding: .75rem 1rem; margin-top: .4rem; border-radius: 0 var(--r) var(--r) 0;
+  font-size: 14px; color: var(--amber); line-height: 1.7;
+}
+
+/* ── SONAR TABLE ── */
+.sonar-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 13.5px; }
+.sonar-table th {
+  background: var(--ink); color: #ced4e0; font-family: 'DM Mono', monospace;
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: .07em;
+  padding: 9px 14px; text-align: left; border-bottom: 2px solid var(--accent);
+}
+.sonar-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.sonar-table tr:hover td { background: var(--paper2); }
+.sonar-table tr:last-child td { border-bottom: none; }
+.stag { font-family: 'DM Mono', monospace; font-size: 11px; }
+.stag.c { color: var(--crit); background: var(--lcrit); padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(192,57,43,.3); }
+.stag.a { color: var(--accent); background: var(--lred); padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(192,57,43,.2); }
+.stag.m { color: var(--amber); background: var(--lamber); padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(183,103,10,.2); }
+.stag.b { color: var(--blue);  background: var(--lblue);  padding: 2px 7px; border-radius: 3px; border: 1px solid rgba(26,74,138,.15); }
+
+/* ── CARD ── */
+.card { background: var(--paper2); border: 1px solid var(--border); border-radius: var(--rl); padding: 1.5rem; margin-bottom: 1.25rem; }
+.g2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 1rem; margin-bottom: 1.25rem; }
+
+/* ── PRINT ── */
+@media print {
+  nav, .reto textarea, details.pista { display: none; }
+  body { background: #fff; color: #000; font-size: 13px; }
+  .hero { background: #1a1a2e; padding: 2rem; }
+  pre { background: #1a1a2e; }
+  pre code { color: #ccc; }
+  .vcard { border: 1px solid #ccc; }
+  section { page-break-inside: avoid; }
+}
+
+@media (max-width: 640px) {
+  .main { padding: 2rem 1rem 4rem; }
+  h2 { font-size: 1.4rem; }
+  .hero h1 { font-size: 1.8rem; }
+  .baGrid { grid-template-columns: 1fr; }
+  pre { font-size: 11.5px; padding: 1rem; }
+  .step { grid-template-columns: 30px 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="ni">
+    <a class="nl" href="#top">⚠ Sprint 2</a>
+    <a href="#contexto">Contexto</a>
+    <a href="#estructura">Estructura</a>
+    <a href="#modulo-auth">autenticacion.py</a>
+    <a href="#modulo-rep">reportes.py</a>
+    <a href="#sonar-analisis">Análisis SonarQube</a>
+    <a href="#correcciones">Correcciones</a>
+    <a href="#pipeline">Pipeline</a>
+  </div>
+</nav>
+
+<div id="top" class="hero">
+  <div class="hero-inner">
+    <span class="hsprint">Calidad del Software · Incremento de Producto · Sprint 2</span>
+    <h1>Notas Universitarias<br><em>con vulnerabilidades reales</em></h1>
+    <p>Dos nuevos módulos incorporados al sistema base — diseñados con fallas técnicas intencionales para ser detectadas, analizadas y corregidas con SonarQube.</p>
+    <div class="htags">
+      <span class="htag crit">SQL Injection</span>
+      <span class="htag crit">Hardcoded Credentials</span>
+      <span class="htag warn">Weak Hashing MD5</span>
+      <span class="htag warn">Division by Zero</span>
+      <span class="htag warn">Predictable Random</span>
+      <span class="htag info">Dead Code</span>
+      <span class="htag info">Cognitive Complexity</span>
+      <span class="htag info">Unused Variables</span>
+    </div>
+  </div>
+</div>
+
+<main class="main">
+
+<!-- ══════════ CONTEXTO ══════════ -->
+<section id="contexto">
+  <h2><span class="sn">01</span> ¿Qué es un incremento de producto?</h2>
+
+  <p>En metodologías ágiles, un <strong>incremento de producto</strong> es el resultado funcional de un sprint — una versión del software que agrega nuevas capacidades sobre la base existente. El Sprint 1 entregó los tres módulos core del sistema de notas (<code>estudiantes.py</code>, <code>materias.py</code>, <code>notas.py</code>). El <strong>Sprint 2</strong> agrega dos nuevos módulos:</p>
+
+  <div class="g2">
+    <div class="vcard critica" style="padding:1.25rem">
+      <span class="vsev critica">Nuevo · Sprint 2</span>
+      <h4>🔐 autenticacion.py</h4>
+      <p style="font-size:13.5px">Login de usuarios, generación de tokens de sesión, cambio de contraseña y verificación de roles de administrador.</p>
+    </div>
+    <div class="vcard media" style="padding:1.25rem">
+      <span class="vsev media">Nuevo · Sprint 2</span>
+      <h4>📊 reportes.py</h4>
+      <p style="font-size:13.5px">Reporte general del sistema, exportación CSV, ranking de estudiantes por promedio y cálculo consolidado de métricas.</p>
+    </div>
+  </div>
+
+  <div class="callout crit">
+    <strong>⚠ Propósito pedagógico:</strong> Ambos módulos contienen vulnerabilidades y code smells <em>intencionales</em>. El objetivo de esta sesión es ejecutar el pipeline, dejar que SonarQube las detecte, aprender a interpretarlas y aplicar las correcciones.
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════ ESTRUCTURA ══════════ -->
+<section id="estructura">
+  <h2><span class="sn">02</span> Estructura del proyecto — Sprint 2</h2>
+
+  <div class="tree">
+    <span class="root">notas_universitarias/</span><br>
+    &nbsp;&nbsp;├── <span class="dir">src/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">__init__.py</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">estudiantes.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># Sprint 1 — sin cambios</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">materias.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># Sprint 1 — sin cambios</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">notas.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># Sprint 1 — sin cambios</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="new">autenticacion.py</span> &nbsp;&nbsp;&nbsp;<span class="cm"># ← NUEVO Sprint 2 🔴 vulnerabilidades</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="new">reportes.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># ← NUEVO Sprint 2 🟠 code smells</span><br>
+    &nbsp;&nbsp;├── <span class="dir">tests/</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">test_estudiantes.py</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">test_materias.py</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="pyf">test_notas.py</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── <span class="new">test_autenticacion.py</span> &nbsp;<span class="cm"># ← NUEVO Sprint 2</span><br>
+    &nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── <span class="new">test_reportes.py</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm"># ← NUEVO Sprint 2</span><br>
+    &nbsp;&nbsp;└── <span class="pyf">Jenkinsfile</span>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════ MÓDULO AUTH ══════════ -->
+<section id="modulo-auth">
+  <h2><span class="sn">03</span> Módulo autenticacion.py — Vulnerabilidades críticas</h2>
+
+  <p>Este módulo implementa el sistema de login. Fue desarrollado "con prisa" — un escenario muy común en equipos reales bajo presión de tiempo. Contiene <strong>5 vulnerabilidades</strong> de distinta severidad.</p>
+
+  <div class="vuln-grid">
+    <div class="vcard critica">
+      <span class="vsev critica">Crítica</span>
+      <h4>SQL Injection</h4>
+      <span class="vrule">python:S3649</span>
+      <p>La query de login concatena el username directamente. Un atacante puede ingresar <code>' OR '1'='1</code> y bypassear la autenticación.</p>
+    </div>
+    <div class="vcard critica">
+      <span class="vsev critica">Crítica</span>
+      <h4>Hardcoded Credentials</h4>
+      <span class="vrule">python:S6437</span>
+      <p>La contraseña del admin y la clave secreta están escritas literalmente en el código fuente. Cualquiera con acceso al repositorio las ve.</p>
+    </div>
+    <div class="vcard alta">
+      <span class="vsev alta">Alta</span>
+      <h4>Weak Hashing — MD5</h4>
+      <span class="vrule">python:S4790</span>
+      <p>MD5 es criptográficamente roto. Un atacante con la base de datos puede crackear las contraseñas con rainbow tables en segundos.</p>
+    </div>
+    <div class="vcard alta">
+      <span class="vsev alta">Alta</span>
+      <h4>Token predecible (random)</h4>
+      <span class="vrule">python:S2245</span>
+      <p><code>random</code> no es criptográficamente seguro. Un atacante puede predecir el siguiente token si conoce el estado del generador.</p>
+    </div>
+    <div class="vcard media">
+      <span class="vsev media">Media</span>
+      <h4>Bare except / log a stdout</h4>
+      <span class="vrule">python:S110, S106</span>
+      <p>Capturar todas las excepciones oculta errores reales. Imprimir la excepción a stdout filtra información técnica al usuario final.</p>
+    </div>
+  </div>
+
+  <h3>El código con las vulnerabilidades señaladas</h3>
+
+  <span class="clabel"><span class="lvuln">⚠ Vulnerabilidades</span> src/autenticacion.py — fragmentos críticos</span>
+  <pre><code><span class="cm"># [VULN CRÍTICA] Credenciales hardcodeadas — SonarQube: python:S6437</span>
+<span class="vuln-line">ADMIN_PASSWORD = <span class="cs">"admin1234"</span>          <span class="cm"># ← expuesto en el repositorio</span></span>
+<span class="vuln-line">DB_SECRET_KEY  = <span class="cs">"clave_secreta_123"</span>  <span class="cm"># ← expuesto en el repositorio</span></span>
+
+<span class="cm"># [VULN ALTA] Hash débil — SonarQube: python:S4790</span>
+<span class="ck">def</span> <span class="cf">_hash_password</span>(password: str) -> str:
+<span class="vuln-line">    <span class="ck">return</span> hashlib.<span class="cc">md5</span>(password.<span class="cc">encode</span>()).<span class="cc">hexdigest</span>()  <span class="cm"># ← MD5 es débil</span></span>
+
+<span class="cm"># [VULN CRÍTICA] SQL Injection — SonarQube: python:S3649</span>
+<span class="ck">def</span> <span class="cf">login</span>(username: str, password: str, db_path: str) -> dict:
+<span class="vuln-line">    query = <span class="cs">"SELECT * FROM usuarios WHERE username = '"</span> + username + \</span>
+<span class="vuln-line">            <span class="cs">"' AND password = '"</span> + <span class="cf">_hash_password</span>(password) + <span class="cs">"'"</span></span>
+    <span class="cm"># Ataque: username = "' OR '1'='1"  →  acceso sin credenciales</span>
+    <span class="ck">try</span>:
+        cursor.<span class="cc">execute</span>(query)
+<span class="vuln-line">    <span class="ck">except</span>:                 <span class="cm"># ← bare except — SonarQube: python:S110</span></span>
+        user = <span class="ck">None</span>
+
+<span class="cm"># [VULN ALTA] Token predecible — SonarQube: python:S2245</span>
+<span class="ck">def</span> <span class="cf">generar_token_sesion</span>(username: str) -> str:
+<span class="vuln-line">    token = <span class="cs">""</span>.<span class="cc">join</span>(random.<span class="cc">choice</span>(chars) <span class="ck">for</span> _ <span class="ck">in</span> <span class="cc">range</span>(<span class="cv">16</span>))  <span class="cm"># ← random no es seguro</span></span>
+    <span class="ck">return</span> <span class="cs">f"</span>{username}<span class="cs">:</span>{token}<span class="cs">"</span></code></pre>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-b">Reto 1 · Básico</span>
+      <span class="rtitle">Identificar el ataque SQL Injection</span>
+    </div>
+    <p style="font-size:14.5px">La función <code>login()</code> construye la query así:<br><code>"SELECT * FROM usuarios WHERE username = '" + username + "'"</code></p>
+    <p style="font-size:14.5px;margin-top:.5rem">Si un atacante ingresa <code>' OR '1'='1' --</code> como username, ¿cómo quedaría la query completa? ¿Por qué eso le daría acceso sin saber la contraseña real?</p>
+    <textarea placeholder="Escribe la query resultante y explica por qué funciona el ataque..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">La query resultante sería: <code>SELECT * FROM usuarios WHERE username = '' OR '1'='1' --' AND password = '...'</code>. La condición <code>'1'='1'</code> siempre es verdadera, y el <code>--</code> comenta el resto. La base de datos retorna todos los usuarios y el primero se usa para "autenticar".</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════ MÓDULO REPORTES ══════════ -->
+<section id="modulo-rep">
+  <h2><span class="sn">04</span> Módulo reportes.py — Code smells y bugs</h2>
+
+  <p>Este módulo fue escrito con prisa por un desarrollador distinto — reutilizó código, no validó casos borde y eligió nombres que violan las convenciones del lenguaje.</p>
+
+  <div class="vuln-grid">
+    <div class="vcard alta">
+      <span class="vsev alta">Alta</span>
+      <h4>División por cero</h4>
+      <span class="vrule">python:S3518</span>
+      <p><code>reporte_general()</code> divide directamente por el número de estudiantes y materias sin validar que sean mayor a cero. Con registros vacíos, <code>ZeroDivisionError</code>.</p>
+    </div>
+    <div class="vcard media">
+      <span class="vsev media">Media</span>
+      <h4>Código duplicado</h4>
+      <span class="vrule">common:DuplicatedBlocks</span>
+      <p><code>calcular_promedio_estudiante()</code> es una copia exacta de <code>GestorNotas.promedio_estudiante()</code>. Viola DRY — si la lógica cambia en uno, el otro queda desactualizado.</p>
+    </div>
+    <div class="vcard media">
+      <span class="vsev media">Media</span>
+      <h4>Complejidad cognitiva alta</h4>
+      <span class="vrule">python:S3776</span>
+      <p><code>GENERAR_REPORTE_CSV()</code> tiene 4 niveles de anidación innecesarios. SonarQube penaliza la complejidad que dificulta la lectura y el mantenimiento.</p>
+    </div>
+    <div class="vcard baja">
+      <span class="vsev baja">Baja</span>
+      <h4>Variable sin usar</h4>
+      <span class="vrule">python:S1481</span>
+      <p><code>FORMATO_FECHA</code>, <code>VERSION_REPORTE</code> y <code>resultado_sin_usar</code> son declaradas pero nunca referenciadas. Código que confunde al lector.</p>
+    </div>
+    <div class="vcard baja">
+      <span class="vsev baja">Baja</span>
+      <h4>Nombre de función en mayúsculas</h4>
+      <span class="vrule">python:S100</span>
+      <p><code>GENERAR_REPORTE_CSV</code> viola PEP8. En Python, las funciones deben usar <code>snake_case</code>. Las mayúsculas se reservan para constantes.</p>
+    </div>
+  </div>
+
+  <h3>El bug de división por cero — señalado</h3>
+  <span class="clabel"><span class="lvuln">⚠ Bug</span> src/reportes.py — función reporte_general</span>
+  <pre><code><span class="ck">def</span> <span class="cf">reporte_general</span>(gestor, registro_est, registro_mat) -> dict:
+    estudiantes = registro_est.<span class="cc">listar</span>()
+    total_estudiantes = <span class="cc">len</span>(estudiantes)
+
+    promedio_global = <span class="cc">sum</span>(
+        gestor.<span class="cc">promedio_estudiante</span>(e.codigo) <span class="ck">for</span> e <span class="ck">in</span> estudiantes
+<span class="vuln-line">    ) / total_estudiantes   <span class="cm"># ← ZeroDivisionError si total_estudiantes == 0</span></span>
+
+    promedio_por_materia = <span class="cc">sum</span>(
+        gestor.<span class="cc">promedio_materia</span>(m.codigo) <span class="ck">for</span> m <span class="ck">in</span> materias
+<span class="vuln-line">    ) / total_materias      <span class="cm"># ← ZeroDivisionError si total_materias == 0</span></span>
+
+    <span class="ck">return</span> {<span class="cs">"promedio_global"</span>: <span class="cc">round</span>(promedio_global, <span class="cv">2</span>), ...}</code></pre>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-i">Reto 2 · Intermedio</span>
+      <span class="rtitle">Calcular la complejidad cognitiva</span>
+    </div>
+    <p style="font-size:14.5px">Abre <code>src/reportes.py</code> y cuenta los niveles de anidación en <code>GENERAR_REPORTE_CSV</code>. SonarQube penaliza +1 por cada <code>for</code>, <code>if</code>, <code>else</code> anidado. ¿Cuántos puntos de complejidad tiene esta función? ¿Cómo la reescribirías para reducirla?</p>
+    <textarea placeholder="Cuenta los puntos de complejidad y propón una versión simplificada..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">El bucle <code>for</code> es +1. Dentro, el primer <code>if/else</code> es +1. Dentro del <code>if</code>, otro <code>if/else</code> es +2 (nivel anidado). Dentro de ese, otro <code>if/else</code> es +3. Total: al menos 7 puntos. Una reescritura limpia reemplaza los 3 <code>if</code> anidados por: <code>aprobados += 1 if t.nota >= 3.0 else 0</code> — la lógica de aprobado es binaria, no necesita sub-condiciones.</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════ ANÁLISIS SONARQUBE ══════════ -->
+<section id="sonar-analisis">
+  <h2><span class="sn">05</span> Ejecutar el pipeline y leer el dashboard de SonarQube</h2>
+
+  <p>Con el proyecto actualizado (Sprint 1 + Sprint 2), ejecuta el pipeline en Jenkins. Cuando SonarQube termine su análisis, deberías ver un dashboard similar a este:</p>
+
+  <div class="callout warn">
+    <strong>Antes de ejecutar:</strong> Copia la carpeta <code>notas_universitarias</code> al contenedor Jenkins con <code>docker cp</code> y asegúrate de que el <code>Jenkinsfile</code> incluye <code>src/autenticacion.py</code> y <code>src/reportes.py</code> en el scope del análisis (ya está configurado con <code>-Dsonar.sources=src</code>).
+  </div>
+
+  <h3>Tabla de hallazgos esperados en SonarQube</h3>
+
+  <div style="overflow-x:auto">
+  <table class="sonar-table">
+    <thead>
+      <tr>
+        <th>Archivo</th>
+        <th>Tipo</th>
+        <th>Severidad</th>
+        <th>Regla SonarQube</th>
+        <th>Qué verás en el dashboard</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>autenticacion.py</code></td>
+        <td>Vulnerability</td>
+        <td><span class="stag c">CRITICAL</span></td>
+        <td><code>python:S3649</code></td>
+        <td>SQL injection — líneas de concatenación en <code>login()</code> y <code>cambiar_password()</code></td>
+      </tr>
+      <tr>
+        <td><code>autenticacion.py</code></td>
+        <td>Vulnerability</td>
+        <td><span class="stag c">CRITICAL</span></td>
+        <td><code>python:S6437</code></td>
+        <td>Hardcoded credentials — <code>ADMIN_PASSWORD</code> y <code>DB_SECRET_KEY</code></td>
+      </tr>
+      <tr>
+        <td><code>autenticacion.py</code></td>
+        <td>Security Hotspot</td>
+        <td><span class="stag a">HIGH</span></td>
+        <td><code>python:S4790</code></td>
+        <td>Weak hashing algorithm — uso de <code>hashlib.md5</code></td>
+      </tr>
+      <tr>
+        <td><code>autenticacion.py</code></td>
+        <td>Security Hotspot</td>
+        <td><span class="stag a">HIGH</span></td>
+        <td><code>python:S2245</code></td>
+        <td>Pseudorandom generators — uso de <code>random.choice</code> para tokens</td>
+      </tr>
+      <tr>
+        <td><code>autenticacion.py</code></td>
+        <td>Code Smell</td>
+        <td><span class="stag m">MEDIUM</span></td>
+        <td><code>python:S110</code></td>
+        <td>Bare except — <code>except:</code> sin tipo de excepción</td>
+      </tr>
+      <tr>
+        <td><code>reportes.py</code></td>
+        <td>Bug</td>
+        <td><span class="stag a">HIGH</span></td>
+        <td><code>python:S3518</code></td>
+        <td>Possible zero division — 2 ocurrencias en <code>reporte_general()</code></td>
+      </tr>
+      <tr>
+        <td><code>reportes.py</code></td>
+        <td>Code Smell</td>
+        <td><span class="stag m">MEDIUM</span></td>
+        <td><code>common:DuplicatedBlocks</code></td>
+        <td>Duplicate code block — <code>calcular_promedio_estudiante</code> copia de <code>GestorNotas</code></td>
+      </tr>
+      <tr>
+        <td><code>reportes.py</code></td>
+        <td>Code Smell</td>
+        <td><span class="stag m">MEDIUM</span></td>
+        <td><code>python:S3776</code></td>
+        <td>Cognitive complexity — <code>GENERAR_REPORTE_CSV</code> excede el umbral</td>
+      </tr>
+      <tr>
+        <td><code>reportes.py</code></td>
+        <td>Code Smell</td>
+        <td><span class="stag b">LOW</span></td>
+        <td><code>python:S1481</code></td>
+        <td>Unused variables — <code>FORMATO_FECHA</code>, <code>VERSION_REPORTE</code>, <code>resultado_sin_usar</code></td>
+      </tr>
+      <tr>
+        <td><code>reportes.py</code></td>
+        <td>Code Smell</td>
+        <td><span class="stag b">LOW</span></td>
+        <td><code>python:S100</code></td>
+        <td>Naming convention — <code>GENERAR_REPORTE_CSV</code> debe ser <code>snake_case</code></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="callout crit">
+    <strong>Quality Gate:</strong> El proyecto <em>fallará</em> el Quality Gate con este código — las vulnerabilidades CRITICAL impiden automáticamente que pase. Esto es exactamente lo que debería ocurrir en un equipo real: el pipeline bloquea la fusión de código inseguro.
+  </div>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-i">Reto 3 · Intermedio</span>
+      <span class="rtitle">Leer el reporte de SonarQube y clasificar</span>
+    </div>
+    <p style="font-size:14.5px">Después de ejecutar el pipeline, entra a <strong>http://localhost:9000</strong> y abre el proyecto. Busca la sección <strong>Issues</strong> y filtra por tipo. Responde:</p>
+    <ol style="margin:.75rem 0 .75rem 1.4rem;line-height:2.2;font-size:14.5px">
+      <li>¿Cuántas vulnerabilidades de tipo <em>Critical</em> detectó SonarQube?</li>
+      <li>¿En qué sección del dashboard aparecen los <em>Security Hotspots</em>?</li>
+      <li>¿Cuánto tiempo de deuda técnica estima SonarQube para los code smells?</li>
+      <li>¿Qué indicador del Quality Gate fue el que hizo que fallara?</li>
+    </ol>
+    <textarea placeholder="Escribe tus observaciones del dashboard de SonarQube..."></textarea>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════ CORRECCIONES ══════════ -->
+<section id="correcciones">
+  <h2><span class="sn">06</span> Aplicar las correcciones — Before / After</h2>
+
+  <h3>Corrección 1 — SQL Injection → Parámetros preparados</h3>
+
+  <div class="baGrid">
+    <div class="ba-box bad">
+      <div class="ba-head">❌ Vulnerable</div>
+      <pre><code><span class="cm"># Concatenación directa — SQL Injection</span>
+query = <span class="cs">"SELECT * FROM usuarios "</span> \
+        <span class="cs">"WHERE username = '"</span> + username + \
+        <span class="cs">"' AND password = '"</span> + pwd + <span class="cs">"'"</span>
+cursor.<span class="cc">execute</span>(query)</code></pre>
+    </div>
+    <div class="ba-box good">
+      <div class="ba-head">✅ Corregido</div>
+      <pre><code><span class="cm"># Parámetros preparados — seguro</span>
+query = <span class="cs">"SELECT * FROM usuarios "</span> \
+        <span class="cs">"WHERE username = ? AND password = ?"</span>
+cursor.<span class="cc">execute</span>(query, (username, pwd))</code></pre>
+    </div>
+  </div>
+
+  <h3>Corrección 2 — MD5 → bcrypt / SHA-256 con salt</h3>
+
+  <div class="baGrid">
+    <div class="ba-box bad">
+      <div class="ba-head">❌ Débil — MD5</div>
+      <pre><code><span class="ck">import</span> hashlib
+<span class="ck">def</span> <span class="cf">_hash_password</span>(pwd):
+    <span class="ck">return</span> hashlib.<span class="cc">md5</span>(
+        pwd.<span class="cc">encode</span>()
+    ).<span class="cc">hexdigest</span>()</code></pre>
+    </div>
+    <div class="ba-box good">
+      <div class="ba-head">✅ Fuerte — SHA-256 + salt</div>
+      <pre><code><span class="ck">import</span> hashlib, secrets
+<span class="ck">def</span> <span class="cf">_hash_password</span>(pwd: str) -> str:
+    salt = secrets.<span class="cc">token_hex</span>(<span class="cv">16</span>)
+    h = hashlib.<span class="cc">sha256</span>(
+        (salt + pwd).<span class="cc">encode</span>()
+    ).<span class="cc">hexdigest</span>()
+    <span class="ck">return</span> <span class="cs">f"</span>{salt}<span class="cs">$</span>{h}<span class="cs">"</span></code></pre>
+    </div>
+  </div>
+
+  <h3>Corrección 3 — Credenciales hardcodeadas → Variables de entorno</h3>
+
+  <div class="baGrid">
+    <div class="ba-box bad">
+      <div class="ba-head">❌ Expuesto en código</div>
+      <pre><code>ADMIN_PASSWORD = <span class="cs">"admin1234"</span>
+DB_SECRET_KEY  = <span class="cs">"clave_123"</span></code></pre>
+    </div>
+    <div class="ba-box good">
+      <div class="ba-head">✅ Desde entorno</div>
+      <pre><code><span class="ck">import</span> os
+ADMIN_PASSWORD = os.<span class="cc">environ</span>[<span class="cs">"ADMIN_PASSWORD"</span>]
+DB_SECRET_KEY  = os.<span class="cc">environ</span>[<span class="cs">"DB_SECRET_KEY"</span>]</code></pre>
+    </div>
+  </div>
+
+  <h3>Corrección 4 — División por cero → Validación previa</h3>
+
+  <div class="baGrid">
+    <div class="ba-box bad">
+      <div class="ba-head">❌ ZeroDivisionError</div>
+      <pre><code>promedio_global = <span class="cc">sum</span>(
+    gestor.<span class="cc">promedio_estudiante</span>(e.codigo)
+    <span class="ck">for</span> e <span class="ck">in</span> estudiantes
+) / total_estudiantes   <span class="cm"># ← crash si 0</span></code></pre>
+    </div>
+    <div class="ba-box good">
+      <div class="ba-head">✅ Validado</div>
+      <pre><code><span class="ck">if</span> total_estudiantes == <span class="cv">0</span>:
+    promedio_global = <span class="cv">0.0</span>
+<span class="ck">else</span>:
+    promedio_global = <span class="cc">sum</span>(
+        gestor.<span class="cc">promedio_estudiante</span>(e.codigo)
+        <span class="ck">for</span> e <span class="ck">in</span> estudiantes
+    ) / total_estudiantes</code></pre>
+    </div>
+  </div>
+
+  <h3>Corrección 5 — Token aleatorio → secrets</h3>
+
+  <div class="baGrid">
+    <div class="ba-box bad">
+      <div class="ba-head">❌ Predecible — random</div>
+      <pre><code><span class="ck">import</span> random, string
+token = <span class="cs">""</span>.<span class="cc">join</span>(
+    random.<span class="cc">choice</span>(chars)
+    <span class="ck">for</span> _ <span class="ck">in</span> <span class="cc">range</span>(<span class="cv">16</span>)
+)</code></pre>
+    </div>
+    <div class="ba-box good">
+      <div class="ba-head">✅ Criptográfico — secrets</div>
+      <pre><code><span class="ck">import</span> secrets
+token = secrets.<span class="cc">token_hex</span>(<span class="cv">32</span>)
+<span class="cm"># 64 chars hex, imposible de predecir</span></code></pre>
+    </div>
+  </div>
+
+  <div class="reto">
+    <div class="reto-h">
+      <span class="rbadge rb-a">Reto 4 · Avanzado</span>
+      <span class="rtitle">Aplicar todas las correcciones y re-ejecutar el pipeline</span>
+    </div>
+    <p style="font-size:14.5px">Aplica las 5 correcciones en tu copia local del proyecto. Luego copia los archivos al contenedor Jenkins (<code>docker cp</code>) y ejecuta el pipeline de nuevo. ¿El Quality Gate ahora pasa? ¿Desaparecieron todas las vulnerabilidades del dashboard de SonarQube?</p>
+    <p style="font-size:14.5px;margin-top:.5rem">Documenta: ¿Cuántas issues quedaron abiertas? ¿Hay alguna que SonarQube aún reporta después de tus correcciones? ¿Por qué?</p>
+    <textarea style="min-height:100px" placeholder="Describe los resultados antes y después de las correcciones..."></textarea>
+    <details class="pista">
+      <summary>Ver pista</summary>
+      <div class="pista-body">Después de corregir SQL injection, credenciales y MD5, los issues de tipo <em>Vulnerability</em> deben desaparecer. Los <em>Code Smells</em> de variables sin usar y naming pueden quedar si no los corregiste también. El Quality Gate debería pasar si la cobertura se mantiene ≥ 80% y no quedan vulnerabilidades Critical/High.</div>
+    </details>
+  </div>
+</section>
+
+<div class="sdiv"></div>
+
+<!-- ══════════ PIPELINE ══════════ -->
+<section id="pipeline">
+  <h2><span class="sn">07</span> Actualizar el pipeline para el Sprint 2</h2>
+
+  <p>El <code>Jenkinsfile</code> del Sprint 1 ya cubre los nuevos módulos automáticamente porque usa <code>-Dsonar.sources=src</code> (escanea toda la carpeta) y <code>python3 -m pytest tests/</code> (ejecuta todos los tests). No necesita cambios para el Sprint 2.</p>
+
+  <p>Sin embargo, es una buena práctica agregar una variable de entorno que identifique el sprint:</p>
+
+  <span class="clabel"><span class="lpy">Jenkinsfile</span> actualización recomendada</span>
+  <pre><code><span class="cf">environment</span> {
+    SONAR_PROJECT_KEY  = <span class="cs">"notas-universitarias"</span>
+    SONAR_PROJECT_NAME = <span class="cs">"Sistema de Notas Universitarias"</span>
+    SONAR_HOST_URL     = <span class="cs">"http://sonarqube:9000"</span>
+    COVERAGE_THRESHOLD = <span class="cs">"75"</span>   <span class="cm"># ← bajado temporalmente: Sprint 2 tiene módulos nuevos</span>
+                                   <span class="cm">#   con menos cobertura. Subir a 80 en el Sprint 3.</span>
+    <span class="ce">SPRINT</span>             = <span class="cs">"2"</span>    <span class="cm"># ← identificador del incremento</span>
+}</code></pre>
+
+  <div class="callout info">
+    <strong>¿Por qué bajar el umbral temporalmente?</strong> Los módulos del Sprint 2 tienen pruebas básicas pero no cubren todos los paths de error (especialmente los de <code>login()</code> que requieren un SQLite real). Bajar el umbral a 75% durante este sprint es técnicamente honesto — y documentarlo en el Jenkinsfile comunica al equipo que es temporal.
+  </div>
+
+  <div class="callout ok">
+    <strong>Al terminar esta sesión</strong> habrás: incorporado código vulnerable a un proyecto real, ejecutado el pipeline completo, observado cómo SonarQube categoriza vulnerabilidades vs bugs vs code smells, aplicado correcciones concretas y verificado que el Quality Gate pasa después de corregir. Ese es el flujo completo de calidad en un sprint real.
+  </div>
+</section>
+
+</main>
+</body>
+</html>
